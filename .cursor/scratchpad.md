@@ -48,7 +48,7 @@ Following the 19 tasks outlined in tasks.md:
 - [x] Task 5: Create Neynar API wrapper ✅ **COMPLETED** - Farcaster API client configured and verified
 - [x] Task 6: Add Farcaster helpers ✅ **COMPLETED** - Domain-specific API wrappers created and tested
 - [x] Task 7: Add profile cache utility ✅ **COMPLETED** - Profile caching implemented and verified working
-- [ ] Task 8: Build sorting utilities
+- [x] Task 8: Build sorting utilities ✅ **COMPLETED** - User sorting functions implemented and verified
 - [ ] Task 9: Create recommendations API route
 - [ ] Task 10: Create WarmRecsList component
 - [ ] Task 11: Wire up home page
@@ -63,22 +63,26 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Current Status / Progress Tracking
 
-**Current Task**: Task 7 - Add profile cache utility ✅ **COMPLETED**
-**Status**: Task 7 completed successfully. Profile cache utility created and verified working with cache hit/miss behavior.
+**Current Task**: Task 8 - Build sorting utilities ✅ **COMPLETED**
+**Status**: Task 8 completed successfully. Sorting utility functions created and verified working with sample data.
 
 **Success Criteria Met**: 
-- ✅ Created utils/profileCache.ts with ProfileCache class
-- ✅ Implemented in-memory caching with TTL (5 minutes)
-- ✅ Added cache hit/miss logic with performance optimization
-- ✅ Added batch profile fetching capability
-- ✅ Verified cache reuse behavior - fetches profile once and reuses it
-- ✅ Cache statistics and LRU eviction implemented
-- ✅ Error handling with fallback to expired cache
-- ✅ Performance improvement demonstrated (instant cache hits vs API calls)
+- ✅ Created utils/sort.ts with sorting functions
+- ✅ Added sortByMutuals() function - sorts users by mutual connection count
+- ✅ Added sortByFollowerCount() function - sorts users by follower count
+- ✅ Added bonus sorting functions: username, display name, warm recommendations
+- ✅ Added composite sorting with weighted scoring system
+- ✅ Verified sample array sorts correctly - all 6 validation tests passed
+- ✅ Included utility functions: getTopUsers(), calculateRecommendationScore()
+- ✅ TypeScript interfaces for UserWithMutuals and SortDirection
 
-**Test Results**: Cache working perfectly - first fetch uses API, subsequent fetches are instant cache hits. Batch fetching verified working for multiple profiles.
+**Test Results**: All sorting algorithms working perfectly:
+- Mutuals: diana(12) → bob(8) → eve(7) → alice(5) → charlie(3) ✅
+- Followers: charlie(3000) → eve(2200) → alice(1500) → diana(800) → bob(500) ✅
+- Warm recs prioritize mutuals first, then followers ✅
+- Recommendation scoring balances multiple factors ✅
 
-**Next Task**: Task 8 - Build sorting utilities
+**Next Task**: Task 9 - Create recommendations API route
 
 ## Executor's Feedback or Assistance Requests
 
