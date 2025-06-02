@@ -22,21 +22,49 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log(`📤 Fetching following for FID: ${fid}`)
+    console.log(`📤 Fetching ALL following for FID: ${fid} (paginated)`)
 
-    // Fetch following with reasonable limit to avoid API rate limits
-    const followingResponse = await getFollowing(fid, 200)
+    // Fetch ALL following using pagination with small batches
+    const allFollowing: any[] = []
+    let cursor: string | undefined = undefined
+    let pageCount = 0
+    const maxPages = 40 // Safety limit (40 * 25 = 1000 max following)
+    const batchSize = 25 // Small batch size to avoid API errors
+
+    do {
+      try {
+        console.log(`📄 Page ${pageCount + 1}: Fetching ${batchSize} following${cursor ? ` (cursor: ${cursor.substring(0, 10)}...)` : ''}`)
+        
+        const followingResponse = await getFollowing(fid, batchSize, cursor)
+        const pageFollowing = followingResponse.data
+        
+        allFollowing.push(...pageFollowing)
+        cursor = followingResponse.nextCursor
+        pageCount++
+        
+        console.log(`📄 Page ${pageCount}: +${pageFollowing.length} following (total: ${allFollowing.length})`)
+        
+        // Small delay between requests to be respectful
+        if (cursor && pageCount < maxPages) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
+      } catch (pageError) {
+        console.error(`❌ Failed to fetch following page ${pageCount + 1}:`, pageError)
+        // Break on error rather than failing completely
+        break
+      }
+      
+    } while (cursor && pageCount < maxPages)
     
-    const following = followingResponse.data
-    
-    console.log(`📤 Successfully fetched ${following.length} following for FID ${fid}`)
+    console.log(`📤 Successfully fetched ${allFollowing.length} total following for FID ${fid} across ${pageCount} pages`)
 
     return NextResponse.json({
       success: true,
-      following: following,
-      count: following.length,
-      hasMore: followingResponse.hasMore,
-      nextCursor: followingResponse.nextCursor
+      following: allFollowing,
+      count: allFollowing.length,
+      pagesFetched: pageCount,
+      isComplete: !cursor || pageCount >= maxPages
     })
 
   } catch (error) {

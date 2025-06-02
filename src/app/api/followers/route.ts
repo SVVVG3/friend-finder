@@ -22,21 +22,49 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log(`📥 Fetching followers for FID: ${fid}`)
+    console.log(`📥 Fetching ALL followers for FID: ${fid} (paginated)`)
 
-    // Fetch followers with reasonable limit to avoid API rate limits
-    const followersResponse = await getFollowers(fid, 200)
+    // Fetch ALL followers using pagination with small batches
+    const allFollowers: any[] = []
+    let cursor: string | undefined = undefined
+    let pageCount = 0
+    const maxPages = 40 // Safety limit (40 * 25 = 1000 max followers)
+    const batchSize = 25 // Small batch size to avoid API errors
+
+    do {
+      try {
+        console.log(`📄 Page ${pageCount + 1}: Fetching ${batchSize} followers${cursor ? ` (cursor: ${cursor.substring(0, 10)}...)` : ''}`)
+        
+        const followersResponse = await getFollowers(fid, batchSize, cursor)
+        const pageFollowers = followersResponse.data
+        
+        allFollowers.push(...pageFollowers)
+        cursor = followersResponse.nextCursor
+        pageCount++
+        
+        console.log(`📄 Page ${pageCount}: +${pageFollowers.length} followers (total: ${allFollowers.length})`)
+        
+        // Small delay between requests to be respectful
+        if (cursor && pageCount < maxPages) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
+      } catch (pageError) {
+        console.error(`❌ Failed to fetch followers page ${pageCount + 1}:`, pageError)
+        // Break on error rather than failing completely
+        break
+      }
+      
+    } while (cursor && pageCount < maxPages)
     
-    const followers = followersResponse.data
-    
-    console.log(`📥 Successfully fetched ${followers.length} followers for FID ${fid}`)
+    console.log(`📥 Successfully fetched ${allFollowers.length} total followers for FID ${fid} across ${pageCount} pages`)
 
     return NextResponse.json({
       success: true,
-      followers: followers,
-      count: followers.length,
-      hasMore: followersResponse.hasMore,
-      nextCursor: followersResponse.nextCursor
+      followers: allFollowers,
+      count: allFollowers.length,
+      pagesFetched: pageCount,
+      isComplete: !cursor || pageCount >= maxPages
     })
 
   } catch (error) {

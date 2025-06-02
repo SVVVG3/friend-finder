@@ -143,7 +143,7 @@ export default function OneWayPage() {
             Discover asymmetric follow relationships in your Farcaster network
           </p>
           <p className="api-note">
-            📊 Shows up to 200 followers and 200 following for analysis
+            📊 Fetches ALL followers and following for complete analysis (up to 1000 each)
           </p>
         </header>
 
@@ -221,7 +221,7 @@ export default function OneWayPage() {
             <div className="loading-content">
               <div className="spinner"></div>
               <p>Analyzing follow relationships...</p>
-              <p className="loading-detail">Fetching followers and following data</p>
+              <p className="loading-detail">Fetching complete follower and following data across multiple pages</p>
             </div>
           </div>
         )}
