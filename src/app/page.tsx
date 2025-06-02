@@ -132,8 +132,8 @@ export default function Home() {
           </div>
           <p className="text-xs text-green-600 mt-2">
             {isDeepAnalysis 
-              ? 'Deep: Analyzes 300+ accounts, finds 8-15+ mutual connections (30-60s)'
-              : 'Standard: Analyzes 100 accounts, finds 1+ mutual connections (3-10s)'
+              ? 'Deep: Analyzes ALL accounts with 1000+ followers for comprehensive results'
+              : 'Standard: Analyzes accounts with 500+ followers for quick results (30-60s)'
             }
           </p>
         </div>
@@ -177,8 +177,8 @@ export default function Home() {
             </div>
             <div className="text-green-600 text-sm mt-2">
               {isDeepAnalysis 
-                ? 'Analyzing 200 high-potential accounts (~1-2 minutes)'
-                : 'Analyzing 75 high-potential accounts (~30-45 seconds)'
+                ? 'Analyzing ALL accounts with 1000+ followers with smart rate limiting'
+                : 'Analyzing 150 accounts with 500+ followers with smart rate limiting (~30-60 seconds)'
               }
             </div>
           </div>

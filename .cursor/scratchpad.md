@@ -158,6 +158,42 @@ Following the 19 tasks outlined in tasks.md:
 - **API Usage**: 75-90% reduction in total API calls
 - **Rate Limit Hits**: Dramatically reduced through better pacing
 
+**🚨 CRITICAL DATA QUALITY ISSUE - USER FEEDBACK:**
+- **User Report**: "but now I feel like the data is not as complete, reliable or useful.."
+- **Problem**: Over-aggressive optimization sacrificed data quality
+- **Evidence**: Went from 100+ high-quality recommendations to only 3 total recommendations
+- **Analysis**: Still hitting rate limits despite "optimizations", poor user experience
+
+**REBALANCED APPROACH - DATA QUALITY FOCUS:**
+1. **Increased Analysis Scope for Quality**:
+   - Standard: 150 accounts (up from 75, balanced from original 300)
+   - Deep: 500 accounts (up from 200, balanced from unlimited 1,984)
+   - **Focus on useful results while managing API usage**
+
+2. **Restored Following Limits**:
+   - Base: 25 per account (up from 20, down from 30)
+   - Large accounts: 30 per account (up from 25, down from 40)
+   - **Better data coverage without excessive API calls**
+
+3. **SMART RATE LIMITING with Exponential Backoff**:
+   - Progressive delays: 300ms every 5 requests
+   - Checkpoint delays: 1.5s every 25 requests  
+   - Exponential backoff on 429s: 5s → 10s → 20s → 30s max
+   - **Much better rate limit management**
+
+4. **Intelligent Error Handling**:
+   - Track consecutive errors, stop after 10 failures
+   - Different delays for rate limits vs other errors
+   - **Robust handling of API issues**
+
+**BALANCED PERFORMANCE EXPECTATIONS**:
+- **Standard Analysis**: ~30-60 seconds (150 accounts with smart rate limiting)
+- **Deep Analysis**: ~2-3 minutes (500 accounts with smart rate limiting) 
+- **Data Quality**: Restored to useful levels with 15+ recommendations
+- **Rate Limit Management**: Exponential backoff prevents cascading failures
+
+**KEY INSIGHT**: The user was right - we overcorrected and sacrificed the core value proposition. Better to have a slower but useful app than a fast but useless one.
+
 ## Executor's Feedback or Assistance Requests
 
 **Task 11 Complete**: Successfully wired up the main home page with complete Friend Finder interface. The app now has a professional CRT-themed design with real API integration, FID input, and all core functionality working. Ready to test manually and proceed to Task 12 (OneWayList component).

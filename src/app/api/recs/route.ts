@@ -103,129 +103,130 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${allFollowing.length} total users that FID ${userFid} follows`)
 
-    // Step 2: Smart account selection for analysis (PRODUCTION LIMITS)
-    // Prioritize accounts with moderate follower counts (sweet spot for mutual discovery)
-    let analysisSelection = allFollowing
-      .filter(user => user.followerCount >= 100) // Only filter out bots (<100 followers)
-      .sort((a, b) => {
-        // Prioritize accounts with 1K-20K followers (best mutual discovery ratio)
-        const aScore = a.followerCount >= 1000 && a.followerCount <= 20000 ? a.followerCount : a.followerCount * 0.5
-        const bScore = b.followerCount >= 1000 && b.followerCount <= 20000 ? b.followerCount : b.followerCount * 0.5
-        return bScore - aScore
-      })
+    // Step 2: SMART account selection based on follower quality
+    // Focus on accounts with meaningful follower counts for better mutual discovery
+    let analysisSelection: any[]
     
-    // Apply PRODUCTION LIMITS for reasonable API usage and response times
     if (!deepParam) {
-      analysisSelection = analysisSelection.slice(0, 75) // Standard: 75 accounts (was 300)
+      // Standard: Analyze accounts with 500+ followers (faster, broader reach)
+      analysisSelection = allFollowing
+        .filter(user => user.followerCount >= 500) // Good social accounts
+        .sort((a, b) => b.followerCount - a.followerCount) // Sort by follower count
+        .slice(0, 150) // Cap at 150 for reasonable speed
     } else {
-      analysisSelection = analysisSelection.slice(0, 200) // Deep: 200 accounts (was unlimited)
+      // Deep: Analyze ALL accounts with 1000+ followers (comprehensive analysis)
+      analysisSelection = allFollowing
+        .filter(user => user.followerCount >= 1000) // High-quality accounts only
+        .sort((a, b) => b.followerCount - a.followerCount) // Sort by follower count descending
+      // NO CAP - analyze all high-quality accounts
     }
 
-    console.log(`🧠 Smart selection: ${analysisSelection.length} high-potential accounts (filtered from ${allFollowing.length})`)
-    console.log(`🔍 ${deepParam ? 'DEEP ANALYSIS: 200 account limit' : 'STANDARD: 75 account limit'} for production performance`)
-    console.log(`⚡ Estimated API calls: ~${analysisSelection.length * 25} (${deepParam ? 'Deep' : 'Standard'} mode)`)
+    console.log(`🧠 Smart selection: ${analysisSelection.length} high-quality accounts (filtered from ${allFollowing.length})`)
+    console.log(`🔍 ${deepParam ? 'DEEP ANALYSIS: ALL accounts with 1000+ followers' : 'STANDARD: Up to 150 accounts with 500+ followers'}`)
+    console.log(`⚡ Estimated API calls: ~${analysisSelection.length * 22} (${deepParam ? 'Deep' : 'Standard'} mode)`)
+    
+    if (deepParam) {
+      console.log(`📊 Deep analysis will process ${analysisSelection.length} accounts with 1000+ followers`)
+    }
 
     // Create exclusion set for performance
     const userFollowingSet = new Set(allFollowing.map(user => user.fid))
     console.log(`🛡️ Exclusion filter ready: ${userFollowingSet.size} followed accounts to exclude`)
 
-    // Step 3: Process accounts in batches with improved rate limiting
-    const batchSize = 20 // Reduced batch size for better rate limiting (was 25)
+    // Step 3: SMART RATE LIMITING with exponential backoff
     const mutualCandidates = new Map<number, UserWithMutuals>()
     let processedCount = 0
     let rateLimitHits = 0
+    let consecutiveErrors = 0
 
-    const totalBatches = Math.ceil(analysisSelection.length / batchSize)
-    console.log(`📦 Processing ${analysisSelection.length} accounts in ${totalBatches} batches of ${batchSize}`)
+    console.log(`📦 Processing ${analysisSelection.length} accounts with SMART RATE LIMITING`)
 
-    for (let i = 0; i < analysisSelection.length; i += batchSize) {
-      const batch = analysisSelection.slice(i, i + batchSize)
-      const batchCount = Math.floor(i / batchSize) + 1
-      
-      console.log(`📦 Processing batch ${batchCount}/${totalBatches} (${batch.length} accounts)`)
+    for (const followedUser of analysisSelection) {
+      try {
+        processedCount++
+        const progress = Math.round((processedCount / analysisSelection.length) * 100)
+        
+        // Progress reporting every 20 accounts or at milestones
+        if (processedCount % 20 === 0 || processedCount === analysisSelection.length) {
+          console.log(`🔗 [${progress}%] Progress: ${processedCount}/${analysisSelection.length} accounts processed`)
+        }
+        
+        // RESTORED following limits for quality (was reduced too much)
+        let followingLimit = 25 // Restored from 20 (was 30 originally)
+        if (followedUser.followerCount > 50000) followingLimit = 30 // Restored from 25 (was 40)
+        else if (followedUser.followerCount > 10000) followingLimit = 28 // Restored from 22 (was 35)
+        else if (followedUser.followerCount > 5000) followingLimit = 25 // Restored from 20 (was 30)
+        
+        // CRITICAL FIX: Trust-based discovery (getFollowing not getFollowers)
+        const following = await getFollowing(followedUser.fid, followingLimit)
+        
+        for (const potentialRec of following.data) {
+          if (!potentialRec.fid || potentialRec.fid === 0) continue
+          if (potentialRec.fid === userFid || userFollowingSet.has(potentialRec.fid)) continue
 
-      for (const followedUser of batch) {
-        try {
-          processedCount++
-          const progress = Math.round((processedCount / analysisSelection.length) * 100)
-          
-          // Progress reporting every 25 accounts or at milestones
-          if (processedCount % 25 === 0 || processedCount === analysisSelection.length) {
-            console.log(`🔗 [${progress}%] Progress: ${processedCount}/${analysisSelection.length} accounts processed`)
-          }
-          
-          // Optimized following limits for faster processing (PRODUCTION SETTINGS)
-          let followingLimit = 20 // Reduced default (was 30)
-          if (followedUser.followerCount > 50000) followingLimit = 25 // Reduced (was 40)
-          else if (followedUser.followerCount > 10000) followingLimit = 22 // Reduced (was 35)
-          else if (followedUser.followerCount > 5000) followingLimit = 20 // Reduced (was 30)
-          
-          // CRITICAL FIX: Changed from getFollowers to getFollowing for trust-based discovery
-          // User insight: Find people that your trusted network follows, not their fans
-          const following = await getFollowing(followedUser.fid, followingLimit)
-          
-          for (const potentialRec of following.data) {
-            if (!potentialRec.fid || potentialRec.fid === 0) continue
-            if (potentialRec.fid === userFid || userFollowingSet.has(potentialRec.fid)) continue
-
-            // Add or update mutual count
-            if (mutualCandidates.has(potentialRec.fid)) {
-              const existing = mutualCandidates.get(potentialRec.fid)!
-              existing.mutualCount = (existing.mutualCount || 0) + 1
-              
-              // Track high mutual discoveries for logging
-              if (existing.mutualCount === 20) {
-                console.log(`🔥 HIGH MUTUAL: ${existing.username} now has ${existing.mutualCount} mutual connections!`)
-              }
-            } else {
-              mutualCandidates.set(potentialRec.fid, {
-                ...potentialRec,
-                mutualCount: 1
-              })
+          // Add or update mutual count
+          if (mutualCandidates.has(potentialRec.fid)) {
+            const existing = mutualCandidates.get(potentialRec.fid)!
+            existing.mutualCount = (existing.mutualCount || 0) + 1
+            
+            // Track high mutual discoveries for logging
+            if (existing.mutualCount === 20) {
+              console.log(`🔥 HIGH MUTUAL: ${existing.username} now has ${existing.mutualCount} mutual connections!`)
             }
-          }
-          
-          // Smart rate limiting: Quick delay every 10 requests to prevent 429s
-          if (processedCount % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100)) // 100ms delay every 10 accounts
-          }
-          
-        } catch (error) {
-          if (error instanceof Error && error.message.includes('429')) {
-            rateLimitHits++
-            console.warn(`⚠️ Rate limit hit on ${followedUser.username || followedUser.fid}, backing off...`)
-            await new Promise(resolve => setTimeout(resolve, 2000)) // 2 second backoff on rate limit
           } else {
-            console.warn(`⚠️ Failed to process ${followedUser.username || followedUser.fid}:`, error instanceof Error ? error.message : 'Unknown error')
+            mutualCandidates.set(potentialRec.fid, {
+              ...potentialRec,
+              mutualCount: 1
+            })
           }
         }
-      }
-      
-      // Check for early termination after each batch (only for standard analysis)
-      if (!deepParam && processedCount >= 400 && mutualCandidates.size > limit * 15) {
-        const highQualityCount = Array.from(mutualCandidates.values()).filter(u => (u.mutualCount || 0) >= 10).length
-        if (highQualityCount >= limit * 5) {
-          console.log(`🎯 Early termination (standard mode): Found ${highQualityCount} high-quality recommendations, stopping for performance`)
+        
+        // SMART RATE LIMITING: Progressive delays based on consecutive errors
+        consecutiveErrors = 0 // Reset on success
+        
+        // Base delay every 5 requests to prevent rate limits
+        if (processedCount % 5 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 300)) // 300ms every 5 requests
+        }
+        
+        // Longer delay every 25 requests for sustained rate management
+        if (processedCount % 25 === 0) {
+          console.log(`⏸️ Checkpoint delay at ${processedCount} accounts...`)
+          await new Promise(resolve => setTimeout(resolve, 1500)) // 1.5s every 25 accounts
+        }
+        
+      } catch (error) {
+        consecutiveErrors++
+        
+        if (error instanceof Error && error.message.includes('429')) {
+          rateLimitHits++
+          // EXPONENTIAL BACKOFF for rate limits
+          const backoffDelay = Math.min(5000 * Math.pow(2, Math.min(consecutiveErrors - 1, 4)), 30000) // Max 30s
+          console.warn(`⚠️ Rate limit hit on ${followedUser.username || followedUser.fid}, backing off for ${backoffDelay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, backoffDelay))
+        } else {
+          console.warn(`⚠️ Failed to process ${followedUser.username || followedUser.fid}:`, error instanceof Error ? error.message : 'Unknown error')
+          // Short delay on other errors
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+        
+        // Break if too many consecutive errors
+        if (consecutiveErrors >= 10) {
+          console.warn(`🚨 Too many consecutive errors (${consecutiveErrors}), stopping analysis early`)
           break
         }
-      }
-      
-      // Improved inter-batch delay for production stability
-      if (i + batchSize < analysisSelection.length) {
-        console.log(`⏸️ Batch ${batchCount} complete. Cooling down before next batch...`)
-        await new Promise(resolve => setTimeout(resolve, 500)) // Increased to 500ms between batches
       }
     }
 
     console.log(`🎯 Found ${mutualCandidates.size} potential recommendations from ${processedCount} analyzed accounts`)
     console.log(`⚠️ Rate limits encountered: ${rateLimitHits} times during analysis`)
-    console.log(`⚡ Processing optimized: ${totalBatches} batches completed with smart account selection`)
+    console.log(`⚡ Processing completed with smart rate limiting and exponential backoff`)
 
-    // Step 4: Filter and enhance recommendations (require 2+ mutuals for deep analysis)
+    // Step 4: Filter and enhance recommendations (smart mutual requirements)
     const minMutuals = deepParam ? 2 : 1
     const recommendations: UserWithMutuals[] = Array.from(mutualCandidates.values())
       .filter(user => (user.mutualCount || 0) >= minMutuals)
-      .filter(user => (user.followingCount || 0) >= 100) // Exclude business/project accounts (they follow <100 people)
+      .filter(user => (user.followingCount || 0) >= 100) // Exclude business/project accounts
       .map(user => ({
         ...user,
         score: calculateRecommendationScore(user)
