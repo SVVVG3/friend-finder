@@ -3,15 +3,13 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { 
-  CRTSpinner, 
   NetworkAnalysisLoader, 
   CRTErrorState, 
   LoadingButton,
   CRTEmptyState,
-  CRTCardSkeleton,
-  APIProgressTracker
+  CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
+import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -118,7 +116,12 @@ export default function OneWayOutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<number>(466111)
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<{
+    totalFollowers: number
+    totalFollowing: number
+    oneWayOutCount: number
+    mutualCount: number
+  } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
   const analyzeOneWayOut = async (fid: number) => {
@@ -193,7 +196,7 @@ export default function OneWayOutPage() {
     }
     
     initializePage()
-  }, [userFid])
+  }, [userFid, loading])
 
   // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {
@@ -227,7 +230,7 @@ export default function OneWayOutPage() {
             → People You Follow
           </h2>
           <p className="text-green-300 text-base sm:text-lg">
-            But don't follow you back
+            But don&apos;t follow you back
           </p>
           <p className="text-green-600 text-xs sm:text-sm mt-2 italic px-2">
             📊 Fetches ALL followers and following for complete analysis
@@ -318,7 +321,7 @@ export default function OneWayOutPage() {
           <>
             <div className="mb-4 text-center px-2">
               <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-2 crt-text-glow">
-                👤 {oneWayUsers.length} accounts you follow but don't follow back
+                👤 {oneWayUsers.length} accounts you follow but don&apos;t follow back
               </h2>
               <p className="text-green-600 text-sm sm:text-base leading-relaxed">
                 Consider unfollowing or wait to see if they follow back

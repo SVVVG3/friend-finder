@@ -118,10 +118,9 @@ export default function OneWayInPage() {
     oneWayInCount: number
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
-  const [apiProgress, setApiProgress] = useState({ current: 0, total: 0 })
 
   // Calculate one-way IN relationships only
-  const calculateOneWayIn = (
+  const calculateOneWayIn = React.useCallback((
     following: FarcasterUser[], 
     followers: FarcasterUser[]
   ) => {
@@ -131,14 +130,13 @@ export default function OneWayInPage() {
     
     // Sort by follower count (highest first) to show most influential accounts at top
     return oneWayInUsers.sort((a, b) => b.followerCount - a.followerCount)
-  }
+  }, [])
 
   // Analyze one-way IN relationships
-  const analyzeOneWayIn = async (fid: string) => {
+  const analyzeOneWayIn = React.useCallback(async (fid: string) => {
     setLoading(true)
     setError(null)
     setLoadingStage('Initializing analysis...')
-    setApiProgress({ current: 0, total: 0 })
     
     try {
       console.log(`🔍 Starting one-way IN analysis for FID: ${fid}`)
@@ -199,9 +197,8 @@ export default function OneWayInPage() {
     } finally {
       setLoading(false)
       setLoadingStage('Initializing...')
-      setApiProgress({ current: 0, total: 0 })
     }
-  }
+  }, [calculateOneWayIn])
 
   // Handle follow action (placeholder)
   const handleFollowUser = async (fid: number) => {
@@ -234,7 +231,7 @@ export default function OneWayInPage() {
     }
     
     initializePage()
-  }, [userFid])
+  }, [userFid, analyzeOneWayIn, loading])
 
   useEffect(() => {
     // Notify Farcaster frame is ready

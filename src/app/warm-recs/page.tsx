@@ -1,18 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
 import WarmRecsList from '../../../components/WarmRecsList'
 import { UserWithMutuals } from '../../../utils/sort'
 import { 
-  CRTSpinner, 
   NetworkAnalysisLoader, 
   CRTErrorState, 
   LoadingButton,
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
+import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
 export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])

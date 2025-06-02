@@ -8,31 +8,6 @@ import {
   calculateRecommendationScore 
 } from '../../../../utils/sort'
 
-// API response interface
-interface RecommendationsResponse {
-  success: boolean
-  userFid: number
-  totalRecommendations: number
-  recommendations: UserWithMutuals[]
-  processingTime: number
-  cacheStats?: {
-    size: number
-    totalAccesses: number
-    avgAge: number
-    oldestEntry: number
-  }
-  debug?: {
-    userFollowingCount: number
-    totalCandidates: number
-    filteredCandidates: number
-    topScores: Array<{
-      username: string
-      mutuals: number | undefined
-      score: number | undefined
-    }>
-  }
-}
-
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
   
