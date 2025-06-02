@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     // Step 2: Smart account selection for optimization
     // Prioritize accounts with moderate follower counts (sweet spot for mutual discovery)
     let smartSelection = allFollowing
-      .filter(user => user.followerCount >= 100 && user.followerCount <= 100000) // Filter out bots and mega-accounts
+      .filter(user => user.followerCount >= 100) // Only filter out bots (<100 followers)
       .sort((a, b) => {
         // Prioritize accounts with 1K-20K followers (best mutual discovery ratio)
         const aScore = a.followerCount >= 1000 && a.followerCount <= 20000 ? a.followerCount : a.followerCount * 0.5
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
     // Deep analysis: use ALL filtered accounts for maximum accuracy
     
     console.log(`🧠 Smart selection: ${smartSelection.length} high-potential accounts (filtered from ${allFollowing.length})`)
-    console.log(`🔍 ${deepParam ? 'DEEP ANALYSIS: Analyzing COMPLETE network' : 'STANDARD: Analyzing subset'} for maximum ${deepParam ? 'accuracy' : 'speed'}`)
+    console.log(`🔍 ${deepParam ? 'DEEP ANALYSIS: Analyzing COMPLETE network including mega-accounts' : 'STANDARD: Analyzing subset'} for maximum ${deepParam ? 'accuracy' : 'speed'}`)
 
     // Step 3: For each selected account, find mutual connections with optimized batch processing
     console.log('🔍 Finding mutual connections with optimized processing...')
