@@ -7,8 +7,7 @@ import {
   NetworkAnalysisLoader, 
   CRTErrorState, 
   LoadingButton,
-  CRTEmptyState,
-  CRTCardSkeleton
+  CRTEmptyState
 } from '../../../components/LoadingStates'
 import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
@@ -97,7 +96,7 @@ export default function Home() {
     }
     
     initializePage()
-  }, [userFid])
+  }, [userFid, loading])
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFid = parseInt(e.target.value) || 466111
