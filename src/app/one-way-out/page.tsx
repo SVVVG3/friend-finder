@@ -172,8 +172,7 @@ export default function OneWayOutPage() {
       
       console.log(`✅ One-way OUT analysis complete: ${sortedOneWayOut.length} asymmetric follows found`)
       
-      // Notify Farcaster that frame is ready when content loads
-      await notifyFrameReady()
+      // Frame ready is now called immediately on mount, not here
     } catch (err) {
       console.error('❌ One-way OUT analysis failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze relationships')
@@ -185,7 +184,18 @@ export default function OneWayOutPage() {
     }
   }, [])
 
-  // Load data on mount - single useEffect, no dependency loops
+  // Notify Farcaster frame is ready immediately when component mounts
+  useEffect(() => {
+    const initializeFrame = async () => {
+      // Call ready as soon as the interface is loaded, not waiting for data
+      await notifyFrameReady()
+      console.log('🚀 Frame ready called immediately on mount')
+    }
+    
+    initializeFrame()
+  }, []) // Run once on mount
+
+  // Load data on mount - separate from frame ready
   useEffect(() => {
     // Only run if we have a valid FID
     if (userFid && userFid > 0) {

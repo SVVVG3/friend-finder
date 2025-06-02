@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import OneWayList, { OneWayUser } from '../../../components/OneWayList'
 import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
@@ -25,6 +25,17 @@ export default function OneWayPage() {
     totalFollowers: number
     mutualConnections: number
   } | null>(null)
+
+  // Notify Farcaster frame is ready immediately when component mounts
+  useEffect(() => {
+    const initializeFrame = async () => {
+      // Call ready as soon as the interface is loaded, not waiting for data
+      await notifyFrameReady()
+      console.log('🚀 Frame ready called immediately on mount')
+    }
+    
+    initializeFrame()
+  }, []) // Run once on mount
 
   // Calculate one-way relationships
   const calculateOneWayRelationships = (
@@ -109,10 +120,7 @@ export default function OneWayPage() {
         mutualConnections: analysis.mutualCount
       })
 
-      // Only notify frame ready when we have data to show
-      if (analysis.oneWayOut.length > 0 || analysis.oneWayIn.length > 0 || followingData.following.length > 0) {
-        await notifyFrameReady()
-      }
+      // Frame ready is now called immediately on mount, not here
 
     } catch (err) {
       console.error('❌ One-way analysis failed:', err)

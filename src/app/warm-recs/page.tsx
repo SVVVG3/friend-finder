@@ -69,10 +69,7 @@ export default function Home() {
         setAnalysisStats(data.debug)
         setIsDeepAnalysis(deep)
         
-        // Only notify Farcaster that frame is ready when we have content to show
-        if (data.recommendations && data.recommendations.length > 0) {
-          await notifyFrameReady()
-        }
+        // Frame ready is now called immediately on mount, not here
       } else {
         throw new Error(data.message || 'Failed to get recommendations')
       }
@@ -87,9 +84,20 @@ export default function Home() {
     }
   }, [])
 
-  // Load recommendations on mount and notify frame ready
+  // Notify Farcaster frame is ready immediately when component mounts
   useEffect(() => {
-    // Only run once on mount
+    const initializeFrame = async () => {
+      // Call ready as soon as the interface is loaded, not waiting for data
+      await notifyFrameReady()
+      console.log('🚀 Frame ready called immediately on mount')
+    }
+    
+    initializeFrame()
+  }, []) // Run once on mount
+
+  // Load recommendations on mount
+  useEffect(() => {
+    // Load data separately from frame ready
     fetchRecommendations(userFid)
   }, [userFid, fetchRecommendations]) // Include dependencies but function is memoized
 

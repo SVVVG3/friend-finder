@@ -194,10 +194,7 @@ export default function OneWayInPage() {
         oneWayInCount: oneWayInUsers.length
       })
 
-      // Only notify frame ready when content is successfully loaded
-      if (oneWayInUsers.length > 0 || followingData.following.length > 0) {
-        await notifyFrameReady()
-      }
+      // Frame ready is now called immediately on mount, not here
     } catch (err) {
       console.error('❌ One-way IN analysis failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
@@ -227,7 +224,18 @@ export default function OneWayInPage() {
     }
   }
 
-  // Load data on mount - single useEffect, no dependency loops
+  // Notify Farcaster frame is ready immediately when component mounts
+  useEffect(() => {
+    const initializeFrame = async () => {
+      // Call ready as soon as the interface is loaded, not waiting for data
+      await notifyFrameReady()
+      console.log('🚀 Frame ready called immediately on mount')
+    }
+    
+    initializeFrame()
+  }, []) // Run once on mount
+
+  // Load data on mount - separate from frame ready
   useEffect(() => {
     // Only run if we have a valid FID
     if (userFid && userFid.trim() !== '') {
