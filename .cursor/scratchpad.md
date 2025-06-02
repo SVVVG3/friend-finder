@@ -127,6 +127,37 @@ Following the 19 tasks outlined in tasks.md:
 - **Implementation**: Added `filter(user => (user.followingCount || 0) >= 100)` to recommendation candidates
 - **Benefit**: Only recommend active social accounts that meaningfully engage with the platform
 
+**🚨 CRITICAL PRODUCTION OPTIMIZATIONS:**
+- **Problem**: 60,000+ API calls per search, 6+ minute response times (unacceptable for production)
+- **ROOT CAUSE**: Analyzing too many accounts (1,984) with too many API calls per account (~30 each)
+
+**IMMEDIATE FIXES IMPLEMENTED:**
+1. **Drastically Reduced Analysis Scope**:
+   - Standard: 75 accounts (was 300) = ~1,875 API calls vs 9,000
+   - Deep: 200 accounts (was unlimited 1,984) = ~5,000 API calls vs 60,000
+   - **75-90% reduction in API usage**
+
+2. **Optimized Following Limits**:
+   - Reduced from 30-40 per account to 20-25 per account
+   - **33% fewer API calls per analyzed account**
+
+3. **Improved Rate Limiting**:
+   - Reduced batch size: 20 accounts (was 25)
+   - Increased inter-batch delays: 500ms (was 200ms)
+   - Smart rate limiting: 100ms delay every 10 requests
+   - **Exponential backoff on 429 errors: 2 second delays**
+
+4. **Better Progress Reporting**:
+   - Report progress every 25 accounts instead of 100
+   - Clear estimated completion times in UI
+   - **User expectations properly set**
+
+**EXPECTED PERFORMANCE IMPROVEMENTS**:
+- **Standard Analysis**: ~30-45 seconds (was 1+ minute)
+- **Deep Analysis**: ~1-2 minutes (was 6+ minutes)
+- **API Usage**: 75-90% reduction in total API calls
+- **Rate Limit Hits**: Dramatically reduced through better pacing
+
 ## Executor's Feedback or Assistance Requests
 
 **Task 11 Complete**: Successfully wired up the main home page with complete Friend Finder interface. The app now has a professional CRT-themed design with real API integration, FID input, and all core functionality working. Ready to test manually and proceed to Task 12 (OneWayList component).

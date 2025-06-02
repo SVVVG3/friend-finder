@@ -177,8 +177,8 @@ export default function Home() {
             </div>
             <div className="text-green-600 text-sm mt-2">
               {isDeepAnalysis 
-                ? 'Analyzing 300+ accounts for strongest mutual connections'
-                : 'Finding mutual connections in your network'
+                ? 'Analyzing 200 high-potential accounts (~1-2 minutes)'
+                : 'Analyzing 75 high-potential accounts (~30-45 seconds)'
               }
             </div>
           </div>
