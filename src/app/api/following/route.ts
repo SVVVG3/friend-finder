@@ -22,49 +22,48 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log(`📤 Fetching ALL following for FID: ${fid} (paginated)`)
+    console.log(`📤 Fetching ALL following for FID: ${fid}`)
 
-    // Fetch ALL following using pagination with larger batches
-    const allFollowing: any[] = []
-    let cursor: string | undefined = undefined
-    let pageCount = 0
     const maxPages = 200 // Much higher limit (200 * 100 = 20000 max, but will stop when no more data)
-    const batchSize = 100 // Increased batch size for better efficiency
+    const batchSize = 100 // Reverting to 100 - 150 caused 400 errors
+    let cursor: string | undefined
+    let page = 1
+    let allFollowing: any[] = []
 
     do {
       try {
-        console.log(`📄 Page ${pageCount + 1}: Fetching ${batchSize} following${cursor ? ` (cursor: ${cursor.substring(0, 10)}...)` : ''}`)
+        console.log(`📄 Page ${page}: Fetching ${batchSize} following${cursor ? ` (cursor: ${cursor.substring(0, 10)}...)` : ''}`)
         
         const followingResponse = await getFollowing(fid, batchSize, cursor)
         const pageFollowing = followingResponse.data
         
         allFollowing.push(...pageFollowing)
         cursor = followingResponse.nextCursor
-        pageCount++
+        page++
         
-        console.log(`📄 Page ${pageCount}: +${pageFollowing.length} following (total: ${allFollowing.length})`)
+        console.log(`📄 Page ${page}: +${pageFollowing.length} following (total: ${allFollowing.length})`)
         
         // Small delay between requests to be respectful
-        if (cursor && pageCount < maxPages) {
+        if (cursor && page < maxPages) {
           await new Promise(resolve => setTimeout(resolve, 100))
         }
         
       } catch (pageError) {
-        console.error(`❌ Failed to fetch following page ${pageCount + 1}:`, pageError)
+        console.error(`❌ Failed to fetch following page ${page}:`, pageError)
         // Break on error rather than failing completely
         break
       }
       
-    } while (cursor && pageCount < maxPages)
+    } while (cursor && page < maxPages)
     
-    console.log(`📤 Successfully fetched ${allFollowing.length} total following for FID ${fid} across ${pageCount} pages`)
+    console.log(`📤 Successfully fetched ${allFollowing.length} total following for FID ${fid} across ${page - 1} pages`)
 
     return NextResponse.json({
       success: true,
       following: allFollowing,
       count: allFollowing.length,
-      pagesFetched: pageCount,
-      isComplete: !cursor || pageCount >= maxPages
+      pagesFetched: page - 1,
+      isComplete: !cursor || page >= maxPages
     })
 
   } catch (error) {
