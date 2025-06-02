@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { UserWithMutuals } from '../utils/sort'
 
@@ -11,7 +11,7 @@ interface WarmRecsListProps {
   className?: string
 }
 
-// Individual recommendation card component
+// Individual recommendation card component - now with modern Tailwind styling
 function RecommendationCard({ 
   recommendation, 
   onFollowUser 
@@ -19,7 +19,7 @@ function RecommendationCard({
   recommendation: UserWithMutuals
   onFollowUser?: (fid: number) => void
 }) {
-  const [imageError, setImageError] = React.useState(false)
+  const [imageError, setImageError] = useState(false)
   
   const { 
     fid, 
@@ -33,313 +33,116 @@ function RecommendationCard({
     bio 
   } = recommendation
 
-  // Helper to check if URL is problematic IPFS
-  const isProblematicImage = (url: string) => {
-    return url.includes('ipfs.decentralized-content.com') || 
-           url.includes('nft.orivium.io') ||
-           url.includes('.ipfs.') ||
-           url.includes('arweave.net')
-  }
-
   return (
-    <div className="rec-card">
-      <div className="rec-header">
-        <div className="rec-avatar">
+    <div className="bg-black border border-green-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden">
+      <div className="flex items-start gap-2 sm:gap-3 mb-3 w-full">
+        <div className="flex-shrink-0">
           {pfpUrl && !imageError ? (
             <Image 
               src={pfpUrl} 
               alt={`${displayName} avatar`}
               width={48}
               height={48}
-              className="avatar-img"
-              onError={(e) => {
-                console.warn(`Failed to load image for ${displayName}: ${pfpUrl}`)
-                setImageError(true)
-              }}
-              unoptimized={true} // Bypass Next.js optimization and domain restrictions completely
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400"
+              onError={() => setImageError(true)}
+              unoptimized={true}
               priority={false}
             />
           ) : (
-            <div className="avatar-placeholder">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-sm sm:text-lg flex-shrink-0">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
         
-        <div className="rec-info">
-          <h3 className="rec-name">{displayName}</h3>
-          <p className="rec-username">@{username}</p>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate">
+            {displayName}
+          </h3>
+          <p className="text-green-300 text-xs sm:text-sm mb-1 truncate">
+            @{username}
+          </p>
           {score && (
-            <div className="rec-score">
+            <div className="text-green-600 text-xs">
               Score: {Math.round(score * 10) / 10}
             </div>
           )}
         </div>
 
         <button 
-          className="follow-btn"
+          className="bg-green-400/10 border border-green-400 text-green-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-green-400/20 hover:shadow-green-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap"
           onClick={() => onFollowUser?.(fid)}
           aria-label={`Follow ${displayName}`}
         >
-          + Follow
+          <span className="hidden sm:inline">+ Follow</span>
+          <span className="sm:hidden">Follow</span>
         </button>
       </div>
 
       {bio && (
-        <div className="rec-bio">
-          <p>{bio.length > 120 ? `${bio.substring(0, 120)}...` : bio}</p>
+        <div className="mb-3 p-2 sm:p-3 bg-green-400/5 rounded border-l-2 border-green-600">
+          <p className="text-green-300 text-xs sm:text-sm leading-relaxed">
+            <span className="sm:hidden">
+              {bio.length > 80 ? `${bio.substring(0, 80)}...` : bio}
+            </span>
+            <span className="hidden sm:inline">
+              {bio.length > 100 ? `${bio.substring(0, 100)}...` : bio}
+            </span>
+          </p>
         </div>
       )}
 
-      <div className="rec-stats">
-        <div className="stat">
-          <span className="stat-label">Mutuals:</span>
-          <span className="stat-value">{mutualCount || 0}</span>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center text-xs sm:text-sm">
+        <div className="bg-green-400/5 rounded p-2 border border-green-600/30">
+          <div className="text-green-600 font-bold text-xs mb-1">MUTUALS:</div>
+          <div className="text-green-400 font-bold text-sm sm:text-base">
+            {mutualCount || 0}
+          </div>
         </div>
-        <div className="stat">
-          <span className="stat-label">Followers:</span>
-          <span className="stat-value">{followerCount.toLocaleString()}</span>
+        <div className="bg-green-400/5 rounded p-2 border border-green-600/30">
+          <div className="text-green-600 font-bold text-xs mb-1">FOLLOWERS:</div>
+          <div className="text-green-400 font-bold text-sm sm:text-base">
+            {followerCount.toLocaleString()}
+          </div>
         </div>
-        <div className="stat">
-          <span className="stat-label">Following:</span>
-          <span className="stat-value">{followingCount.toLocaleString()}</span>
+        <div className="bg-green-400/5 rounded p-2 border border-green-600/30">
+          <div className="text-green-600 font-bold text-xs mb-1">FOLLOWING:</div>
+          <div className="text-green-400 font-bold text-sm sm:text-base">
+            {followingCount.toLocaleString()}
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .rec-card {
-          background: rgba(0, 255, 0, 0.05);
-          border: 1px solid #00ff00;
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 16px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-          transition: all 0.2s ease;
-        }
-
-        .rec-card:hover {
-          background: rgba(0, 255, 0, 0.1);
-          box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-          transform: translateY(-2px);
-        }
-
-        .rec-header {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-
-        .rec-avatar {
-          flex-shrink: 0;
-        }
-
-        .avatar-img {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          border: 1px solid #00ff00;
-        }
-
-        .avatar-placeholder {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          border: 1px solid #00ff00;
-          background: rgba(0, 255, 0, 0.1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #00ff00;
-          font-weight: bold;
-          font-size: 18px;
-        }
-
-        .rec-info {
-          flex: 1;
-        }
-
-        .rec-name {
-          color: #00ff00;
-          margin: 0 0 4px 0;
-          font-size: 16px;
-          font-weight: bold;
-        }
-
-        .rec-username {
-          color: #00cc00;
-          margin: 0 0 4px 0;
-          font-size: 14px;
-        }
-
-        .rec-score {
-          color: #00aa00;
-          font-size: 12px;
-        }
-
-        .follow-btn {
-          background: rgba(0, 255, 0, 0.1);
-          border: 1px solid #00ff00;
-          color: #00ff00;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-family: inherit;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        }
-
-        .follow-btn:hover {
-          background: rgba(0, 255, 0, 0.2);
-          box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-        }
-
-        .rec-bio {
-          margin-bottom: 12px;
-          padding: 8px;
-          background: rgba(0, 255, 0, 0.02);
-          border-left: 2px solid #00ff00;
-        }
-
-        .rec-bio p {
-          color: #00cc00;
-          margin: 0;
-          font-size: 14px;
-          line-height: 1.4;
-        }
-
-        .rec-stats {
-          display: flex;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
-
-        .stat {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .stat-label {
-          color: #00aa00;
-          font-size: 12px;
-          text-transform: uppercase;
-        }
-
-        .stat-value {
-          color: #00ff00;
-          font-size: 14px;
-          font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-          .rec-header {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          
-          .follow-btn {
-            align-self: flex-end;
-            margin-top: 8px;
-          }
-          
-          .rec-stats {
-            justify-content: space-between;
-          }
-        }
-      `}</style>
     </div>
   )
 }
 
-// Loading skeleton component
+// Loading skeleton component with modern styling
 function LoadingSkeleton() {
   return (
-    <div className="loading-container">
-      {[1, 2, 3].map(i => (
-        <div key={i} className="skeleton-card">
-          <div className="skeleton-header">
-            <div className="skeleton-avatar"></div>
-            <div className="skeleton-info">
-              <div className="skeleton-line skeleton-name"></div>
-              <div className="skeleton-line skeleton-username"></div>
-            </div>
-          </div>
-          <div className="skeleton-stats">
-            <div className="skeleton-line skeleton-stat"></div>
-            <div className="skeleton-line skeleton-stat"></div>
-            <div className="skeleton-line skeleton-stat"></div>
-          </div>
+    <div className="bg-black border border-green-400/50 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono animate-pulse w-full max-w-full overflow-x-hidden">
+      <div className="flex items-start gap-2 sm:gap-3 mb-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-400/20 flex-shrink-0"></div>
+        <div className="flex-1">
+          <div className="h-4 bg-green-400/20 rounded mb-2 w-3/4"></div>
+          <div className="h-3 bg-green-400/10 rounded mb-1 w-1/2"></div>
+          <div className="h-2 bg-green-400/10 rounded w-1/4"></div>
         </div>
-      ))}
-
-      <style jsx>{`
-        .loading-container {
-          animation: pulse 2s infinite;
-        }
-
-        .skeleton-card {
-          background: rgba(0, 255, 0, 0.02);
-          border: 1px solid rgba(0, 255, 0, 0.3);
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 16px;
-        }
-
-        .skeleton-header {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-
-        .skeleton-avatar {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: rgba(0, 255, 0, 0.1);
-        }
-
-        .skeleton-info {
-          flex: 1;
-        }
-
-        .skeleton-line {
-          background: rgba(0, 255, 0, 0.1);
-          border-radius: 4px;
-          margin-bottom: 8px;
-        }
-
-        .skeleton-name {
-          height: 16px;
-          width: 60%;
-        }
-
-        .skeleton-username {
-          height: 14px;
-          width: 40%;
-        }
-
-        .skeleton-stats {
-          display: flex;
-          gap: 16px;
-        }
-
-        .skeleton-stat {
-          height: 12px;
-          width: 60px;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-      `}</style>
+        <div className="w-16 h-9 bg-green-400/20 rounded"></div>
+      </div>
+      <div className="mb-3 p-2 sm:p-3 bg-green-400/5 rounded">
+        <div className="h-3 bg-green-400/10 rounded mb-1"></div>
+        <div className="h-3 bg-green-400/10 rounded w-4/5"></div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-green-400/5 rounded p-2 h-12"></div>
+        <div className="bg-green-400/5 rounded p-2 h-12"></div>
+        <div className="bg-green-400/5 rounded p-2 h-12"></div>
+      </div>
     </div>
   )
 }
 
-// Main component
+// Main component with modern layout and mobile optimization
 export default function WarmRecsList({ 
   recommendations, 
   loading = false, 
@@ -347,130 +150,82 @@ export default function WarmRecsList({
   onFollowUser,
   className = '' 
 }: WarmRecsListProps) {
-  // Loading state
+  
   if (loading) {
     return (
-      <div className={`warm-recs-list ${className}`}>
-        <h2 className="list-title">🔥 Warm Recommendations</h2>
-        <LoadingSkeleton />
+      <div className={`w-full ${className}`}>
+        <div className="text-center py-8 sm:py-12 px-4">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-green-400 mb-4"></div>
+          <div className="text-green-400 text-base sm:text-lg font-bold">
+            🔍 Finding warm recommendations...
+          </div>
+          <div className="text-green-600 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
+            Analyzing your network for the best connections
+          </div>
+        </div>
+        
+        {/* Loading skeletons */}
+        <div className="space-y-3 sm:space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <LoadingSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
 
-  // Error state
   if (error) {
     return (
-      <div className={`warm-recs-list ${className}`}>
-        <h2 className="list-title">🔥 Warm Recommendations</h2>
-        <div className="error-message">
-          <p>⚠️ {error}</p>
-          <p>Please try again later.</p>
+      <div className={`w-full ${className}`}>
+        <div className="text-center py-8 px-4">
+          <div className="text-red-400 text-lg font-bold mb-2">
+            ⚠️ Error Loading Recommendations
+          </div>
+          <div className="text-red-300 text-sm bg-red-400/10 border border-red-400/50 rounded p-3 max-w-md mx-auto">
+            {error}
+          </div>
         </div>
-
-        <style jsx>{`
-          .error-message {
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px solid #ff4444;
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-            color: #ff4444;
-            font-family: 'Monaco', 'Menlo', monospace;
-          }
-
-          .error-message p {
-            margin: 4px 0;
-          }
-        `}</style>
       </div>
     )
   }
 
-  // Empty state
-  if (!recommendations || recommendations.length === 0) {
+  if (!recommendations.length) {
     return (
-      <div className={`warm-recs-list ${className}`}>
-        <h2 className="list-title">🔥 Warm Recommendations</h2>
-        <div className="empty-message">
-          <p>📭 No warm recommendations found</p>
-          <p>Try following more people to get better recommendations!</p>
+      <div className={`w-full ${className}`}>
+        <div className="text-center py-8 px-4">
+          <div className="text-green-400 text-lg font-bold mb-2">
+            🤖 No Warm Recommendations Found
+          </div>
+          <div className="text-green-600 text-sm max-w-md mx-auto leading-relaxed">
+            Try following more people or check back later for new recommendations.
+          </div>
         </div>
-
-        <style jsx>{`
-          .empty-message {
-            background: rgba(0, 255, 0, 0.05);
-            border: 1px dashed #00ff00;
-            border-radius: 8px;
-            padding: 32px;
-            text-align: center;
-            color: #00cc00;
-            font-family: 'Monaco', 'Menlo', monospace;
-          }
-
-          .empty-message p {
-            margin: 8px 0;
-          }
-        `}</style>
       </div>
     )
   }
 
-  // Main render
   return (
-    <div className={`warm-recs-list ${className}`}>
-      <h2 className="list-title">
-        🔥 Warm Recommendations ({recommendations.length})
-      </h2>
-      
-      <div className="recommendations-container">
+    <div className={`w-full ${className}`}>
+      {/* Header with count */}
+      <div className="mb-4 sm:mb-6 text-center">
+        <div className="text-green-400 text-sm sm:text-base font-mono">
+          🔥 <span className="font-bold text-lg">{recommendations.length}</span> warm recommendations found
+        </div>
+        <div className="text-green-600 text-xs sm:text-sm mt-1 italic">
+          📊 Sorted by follower count (most influential first)
+        </div>
+      </div>
+
+      {/* Recommendations list */}
+      <div className="space-y-3 sm:space-y-4">
         {recommendations.map((rec) => (
-          <RecommendationCard
-            key={rec.fid}
-            recommendation={rec}
+          <RecommendationCard 
+            key={rec.fid} 
+            recommendation={rec} 
             onFollowUser={onFollowUser}
           />
         ))}
       </div>
-
-      <style jsx>{`
-        .warm-recs-list {
-          width: 100%;
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .list-title {
-          color: #00ff00;
-          font-family: 'Monaco', 'Menlo', monospace;
-          font-size: 24px;
-          margin-bottom: 24px;
-          text-align: center;
-          text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .recommendations-container {
-          max-height: 80vh;
-          overflow-y: auto;
-          padding: 0 4px;
-        }
-
-        .recommendations-container::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .recommendations-container::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.3);
-        }
-
-        .recommendations-container::-webkit-scrollbar-thumb {
-          background: rgba(0, 255, 0, 0.5);
-          border-radius: 4px;
-        }
-
-        .recommendations-container::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 255, 0, 0.7);
-        }
-      `}</style>
     </div>
   )
 } 

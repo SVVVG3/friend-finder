@@ -2,6 +2,14 @@
 
 import React, { useState } from 'react'
 import Image from 'next/image'
+import { 
+  CRTSpinner, 
+  NetworkAnalysisLoader, 
+  CRTErrorState, 
+  LoadingButton,
+  CRTEmptyState,
+  CRTCardSkeleton
+} from '../../../components/LoadingStates'
 
 interface FarcasterUser {
   fid: number
@@ -34,7 +42,7 @@ function OneWayOutCard({
   } = user
 
   return (
-    <div className="bg-black border border-green-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden">
+    <div className="bg-black border border-green-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow hover:crt-glow-strong">
       <div className="flex items-start gap-2 sm:gap-3 mb-3 w-full">
         <div className="flex-shrink-0">
           {pfpUrl && !imageError ? (
@@ -43,26 +51,26 @@ function OneWayOutCard({
               alt={`${displayName} avatar`}
               width={48}
               height={48}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 crt-glow"
               onError={() => setImageError(true)}
               unoptimized={true}
               priority={false}
             />
           ) : (
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-sm sm:text-lg">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-sm sm:text-lg crt-glow">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
         
         <div className="flex-1 min-w-0 overflow-hidden">
-          <h4 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate">{displayName}</h4>
+          <h4 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate crt-text-glow">{displayName}</h4>
           <p className="text-green-300 text-xs sm:text-sm mb-1 truncate">@{username}</p>
         </div>
 
         <div className="flex-shrink-0">
           <button 
-            className="bg-orange-400/10 border border-orange-400 text-orange-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-orange-400/20 hover:shadow-orange-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap"
+            className="bg-orange-400/10 border border-orange-400 text-orange-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-orange-400/20 hover:shadow-orange-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap crt-border-glow hover:crt-glow-strong"
             onClick={() => onUnfollowUser?.(fid)}
             aria-label={`Unfollow ${displayName}`}
           >
@@ -73,7 +81,7 @@ function OneWayOutCard({
       </div>
 
       {bio && (
-        <div className="mb-3 p-2 sm:p-3 bg-green-400/5 rounded border-l-2 border-green-600 w-full overflow-x-hidden">
+        <div className="mb-3 p-2 sm:p-3 bg-green-400/5 rounded border-l-2 border-green-600 w-full overflow-x-hidden crt-border-glow">
           <p className="text-green-300 text-xs sm:text-sm leading-relaxed break-words">
             <span className="sm:hidden">
               {bio.length > 80 ? `${bio.substring(0, 80)}...` : bio}
@@ -88,11 +96,11 @@ function OneWayOutCard({
       <div className="flex gap-4 sm:gap-6 w-full">
         <div className="flex flex-col flex-1">
           <span className="text-green-600 text-xs mb-1">Followers:</span>
-          <span className="text-green-400 font-bold text-xs sm:text-sm">{followerCount.toLocaleString()}</span>
+          <span className="text-green-400 font-bold text-xs sm:text-sm crt-text-glow">{followerCount.toLocaleString()}</span>
         </div>
         <div className="flex flex-col flex-1">
           <span className="text-green-600 text-xs mb-1">Following:</span>
-          <span className="text-green-400 font-bold text-xs sm:text-sm">{followingCount.toLocaleString()}</span>
+          <span className="text-green-400 font-bold text-xs sm:text-sm crt-text-glow">{followingCount.toLocaleString()}</span>
         </div>
       </div>
     </div>
@@ -109,6 +117,7 @@ export default function OneWayOutPage() {
     totalFollowers: number
     oneWayOutCount: number
   } | null>(null)
+  const [loadingStage, setLoadingStage] = useState('Initializing...')
 
   // Calculate one-way OUT relationships only
   const calculateOneWayOut = (
@@ -127,9 +136,12 @@ export default function OneWayOutPage() {
   const analyzeOneWayOut = async (fid: string) => {
     setLoading(true)
     setError(null)
+    setLoadingStage('Initializing analysis...')
     
     try {
       console.log(`🔍 Starting one-way OUT analysis for FID: ${fid}`)
+      
+      setLoadingStage('Fetching your network data...')
       
       // Fetch both followers and following in parallel
       const [followingResponse, followersResponse] = await Promise.all([
@@ -145,6 +157,8 @@ export default function OneWayOutPage() {
         throw new Error(`Failed to fetch followers: ${followersResponse.statusText}`)
       }
 
+      setLoadingStage('Processing network data...')
+
       const followingData = await followingResponse.json()
       const followersData = await followersResponse.json()
 
@@ -157,6 +171,8 @@ export default function OneWayOutPage() {
       }
 
       console.log(`📊 Fetched ${followingData.following.length} following, ${followersData.followers.length} followers`)
+
+      setLoadingStage('Calculating one-way relationships...')
 
       // Calculate one-way OUT relationships
       const oneWayOutUsers = calculateOneWayOut(
@@ -178,6 +194,7 @@ export default function OneWayOutPage() {
       setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
     } finally {
       setLoading(false)
+      setLoadingStage('Initializing...')
     }
   }
 
@@ -195,21 +212,30 @@ export default function OneWayOutPage() {
     }
   }
 
+  const handleRetry = () => {
+    if (userFid.trim()) {
+      analyzeOneWayOut(userFid.trim())
+    }
+  }
+
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8 w-full">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider">
-            → People You Follow
+        <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
+            🔍 FRIEND FINDER
           </h1>
+          <h2 className="text-xl sm:text-2xl font-bold mb-2 text-green-300 crt-text-glow">
+            → People You Follow
+          </h2>
           <p className="text-green-300 text-base sm:text-lg">
             But don't follow you back
           </p>
           <p className="text-green-600 text-xs sm:text-sm mt-2 italic px-2">
             📊 Fetches ALL followers and following for complete analysis
           </p>
-          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto"></div>
+          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
 
         {/* Input Form - Mobile Optimized */}
@@ -225,77 +251,76 @@ export default function OneWayOutPage() {
                 value={userFid}
                 onChange={(e) => setUserFid(e.target.value)}
                 placeholder="e.g. 3621"
-                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0"
+                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
                 disabled={loading}
                 min="1"
                 required
                 inputMode="numeric"
                 pattern="[0-9]*"
               />
-              <button 
+              <LoadingButton 
                 type="submit" 
+                loading={loading}
                 disabled={loading || !userFid.trim()}
-                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0"
+                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
               >
-                {loading ? 'Analyzing...' : 'Analyze'}
-              </button>
+                Analyze
+              </LoadingButton>
             </div>
           </div>
         </form>
 
         {/* Analysis Stats - Mobile Responsive */}
-        {analysisStats && (
-          <div className="mb-6 p-3 sm:p-4 bg-gray-900 border border-green-600 rounded-lg mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden">
-            <h3 className="text-green-400 font-bold mb-3 text-center sm:text-left text-sm sm:text-base">📊 Analysis Results</h3>
+        {analysisStats && !loading && (
+          <div className="mb-6 p-3 sm:p-4 bg-gray-900 border border-green-600 rounded-lg mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow">
+            <h3 className="text-green-400 font-bold mb-3 text-center sm:text-left text-sm sm:text-base crt-text-glow">📊 Analysis Results</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm w-full">
               <div className="text-center sm:text-left">
                 <span className="text-green-600 block sm:inline">You Follow:</span>
-                <div className="text-green-400 font-bold text-lg sm:text-base">{analysisStats.totalFollowing.toLocaleString()}</div>
+                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.totalFollowing.toLocaleString()}</div>
               </div>
               <div className="text-center sm:text-left">
                 <span className="text-green-600 block sm:inline">Follow You:</span>
-                <div className="text-green-400 font-bold text-lg sm:text-base">{analysisStats.totalFollowers.toLocaleString()}</div>
+                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.totalFollowers.toLocaleString()}</div>
               </div>
               <div className="text-center sm:text-left">
                 <span className="text-orange-400 block sm:inline">One-Way Out:</span>
-                <div className="text-orange-400 font-bold text-lg sm:text-base">{analysisStats.oneWayOutCount.toLocaleString()}</div>
+                <div className="text-orange-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.oneWayOutCount.toLocaleString()}</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Loading State - Mobile Optimized */}
+        {/* Enhanced Loading State */}
         {loading && (
-          <div className="text-center py-8 sm:py-12 px-4">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-green-400 mb-4"></div>
-            <div className="text-green-400 text-base sm:text-lg font-bold">
-              🔍 Analyzing one-way relationships...
-            </div>
-            <div className="text-green-600 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-              Finding accounts you follow who don't follow back
-            </div>
+          <div className="mb-6">
+            <NetworkAnalysisLoader
+              stage={loadingStage}
+              progress={0}
+              className="mb-4"
+            />
+            
+            {/* Show skeleton cards while loading */}
+            <CRTCardSkeleton count={3} />
           </div>
         )}
 
-        {/* Error State - Mobile Optimized */}
-        {error && (
-          <div className="text-center py-8 px-4">
-            <div className="text-red-400 text-lg sm:text-xl mb-2">⚠️ Error</div>
-            <div className="text-red-300 text-sm sm:text-base mb-4 max-w-sm mx-auto leading-relaxed">{error}</div>
-            <button
-              onClick={() => analyzeOneWayOut(userFid)}
-              className="bg-red-900 hover:bg-red-800 text-red-400 px-4 py-3 sm:py-2 rounded-md border border-red-600 transition-colors min-h-[44px] text-sm sm:text-base"
-            >
-              Try Again
-            </button>
-          </div>
+        {/* Enhanced Error State */}
+        {error && !loading && (
+          <CRTErrorState
+            title="Analysis Failed"
+            message={error}
+            onRetry={handleRetry}
+            retryLabel="Try Again"
+            className="mb-6"
+          />
         )}
 
         {/* Results - Mobile Optimized */}
         {!loading && !error && oneWayOut.length > 0 && (
           <>
             <div className="mb-4 text-center px-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-2 crt-text-glow">
                 👤 {oneWayOut.length} accounts you follow but don't follow back
               </h2>
               <p className="text-green-600 text-sm sm:text-base leading-relaxed">
@@ -318,16 +343,14 @@ export default function OneWayOutPage() {
           </>
         )}
 
-        {/* No Results - Mobile Optimized */}
+        {/* Enhanced Empty State */}
         {!loading && !error && oneWayOut.length === 0 && analysisStats && (
-          <div className="text-center py-8 sm:py-12 px-4">
-            <div className="text-gray-400 text-base sm:text-lg mb-2">
-              No one-way following found
-            </div>
-            <div className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed">
-              All accounts you follow also follow you back!
-            </div>
-          </div>
+          <CRTEmptyState
+            icon="🎯"
+            title="No One-Way Following Found"
+            message="All accounts you follow also follow you back! Perfect mutual relationships."
+            className="mb-6"
+          />
         )}
       </div>
     </div>

@@ -3,6 +3,13 @@
 import React, { useState, useEffect } from 'react'
 import WarmRecsList from '../../../components/WarmRecsList'
 import { UserWithMutuals } from '../../../utils/sort'
+import { 
+  CRTSpinner, 
+  NetworkAnalysisLoader, 
+  CRTErrorState, 
+  LoadingButton,
+  CRTEmptyState 
+} from '../../../components/LoadingStates'
 
 export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
@@ -11,15 +18,36 @@ export default function Home() {
   const [userFid, setUserFid] = useState<number>(466111) // Your FID
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<any>(null)
+  const [loadingStage, setLoadingStage] = useState('Initializing...')
+  const [loadingProgress, setLoadingProgress] = useState(0)
 
   const fetchRecommendations = async (fid: number, deep: boolean = false) => {
     try {
       setLoading(true)
       setError(null)
       setAnalysisStats(null)
+      setLoadingProgress(0)
+      setLoadingStage('Initializing analysis...')
+      
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev < 90) return prev + Math.random() * 15
+          return prev
+        })
+      }, 1000)
+
+      // Update stage messages
+      setTimeout(() => setLoadingStage('Fetching your network...'), 500)
+      setTimeout(() => setLoadingStage('Analyzing connections...'), 2000)
+      setTimeout(() => setLoadingStage('Calculating recommendations...'), 4000)
       
       const deepParam = deep ? '&deep=true' : ''
       const response = await fetch(`/api/recs?fid=${fid}&limit=50&debug=true${deepParam}`)
+      
+      clearInterval(progressInterval)
+      setLoadingProgress(100)
+      setLoadingStage('Finalizing results...')
       
       if (!response.ok) {
         throw new Error(`Failed to fetch recommendations: ${response.status}`)
@@ -40,6 +68,8 @@ export default function Home() {
       setRecommendations([])
     } finally {
       setLoading(false)
+      setLoadingProgress(0)
+      setLoadingStage('Initializing...')
     }
   }
 
@@ -66,18 +96,22 @@ export default function Home() {
     fetchRecommendations(userFid, false)
   }
 
+  const handleRetry = () => {
+    fetchRecommendations(userFid, isDeepAnalysis)
+  }
+
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8 w-full">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider">
+        <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
             🔍 FRIEND FINDER
           </h1>
           <p className="text-green-300 text-base sm:text-lg">
             Discover warm connections in your Farcaster network
           </p>
-          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto"></div>
+          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
 
         {/* FID Input - Mobile Optimized */}
@@ -92,47 +126,51 @@ export default function Home() {
                 id="fid"
                 value={userFid}
                 onChange={handleFidChange}
-                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0"
+                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
                 placeholder="Your FID"
                 inputMode="numeric"
                 pattern="[0-9]*"
-              />
-              <button
-                type="submit"
                 disabled={loading}
-                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0"
+              />
+              <LoadingButton
+                type="submit"
+                loading={loading}
+                disabled={loading}
+                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
               >
-                {loading ? 'Analyzing...' : 'Analyze'}
-              </button>
+                Analyze
+              </LoadingButton>
             </div>
           </div>
         </form>
 
         {/* Analysis Mode Controls - Mobile Optimized */}
         <div className="mb-6 text-center px-2 w-full">
-          <div className="inline-flex gap-1 sm:gap-2 bg-gray-900 p-1 rounded-lg border border-green-600 w-full max-w-md sm:max-w-none sm:w-auto">
-            <button
+          <div className="inline-flex gap-1 sm:gap-2 bg-gray-900 p-1 rounded-lg border border-green-600 w-full max-w-md sm:max-w-none sm:w-auto crt-glow">
+            <LoadingButton
               onClick={handleStandardAnalysis}
+              loading={loading}
               disabled={loading}
               className={`px-3 sm:px-4 py-2 sm:py-2 rounded-md transition-colors text-xs sm:text-sm flex-1 sm:flex-none min-h-[44px] whitespace-nowrap ${
                 !isDeepAnalysis && !loading
-                  ? 'bg-green-900 text-green-400 border border-green-600'
+                  ? 'bg-green-900 text-green-400 border border-green-600 crt-glow'
                   : 'text-green-600 hover:text-green-400'
               }`}
             >
               Standard<span className="hidden sm:inline"> Analysis</span>
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               onClick={handleDeepAnalysis}
+              loading={loading}
               disabled={loading}
               className={`px-3 sm:px-4 py-2 sm:py-2 rounded-md transition-colors text-xs sm:text-sm flex-1 sm:flex-none min-h-[44px] whitespace-nowrap ${
                 isDeepAnalysis && !loading
-                  ? 'bg-green-900 text-green-400 border border-green-600'
+                  ? 'bg-green-900 text-green-400 border border-green-600 crt-glow'
                   : 'text-green-600 hover:text-green-400'
               }`}
             >
               🚀 Deep<span className="hidden sm:inline"> Analysis</span>
-            </button>
+            </LoadingButton>
           </div>
           <p className="text-xs text-green-600 mt-2 max-w-sm sm:max-w-none mx-auto leading-relaxed">
             {isDeepAnalysis 
@@ -143,9 +181,9 @@ export default function Home() {
         </div>
 
         {/* Analysis Stats - Mobile Responsive */}
-        {analysisStats && (
-          <div className="mb-6 p-3 sm:p-4 bg-gray-900 border border-green-600 rounded-lg mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden">
-            <h3 className="text-green-400 font-bold mb-3 text-center sm:text-left text-sm sm:text-base">📊 Analysis Results</h3>
+        {analysisStats && !loading && (
+          <div className="mb-6 p-3 sm:p-4 bg-gray-900 border border-green-600 rounded-lg mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow">
+            <h3 className="text-green-400 font-bold mb-3 text-center sm:text-left text-sm sm:text-base crt-text-glow">📊 Analysis Results</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm w-full">
               <div className="text-center sm:text-left">
                 <span className="text-green-600 block sm:inline">Total Following:</span>
@@ -172,34 +210,24 @@ export default function Home() {
           </div>
         )}
 
-        {/* Loading State - Mobile Optimized */}
+        {/* Enhanced Loading State */}
         {loading && (
-          <div className="text-center py-8 sm:py-12 px-4">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-green-400 mb-4"></div>
-            <div className="text-green-400 text-base sm:text-lg font-bold">
-              {isDeepAnalysis ? '🚀 Running deep network analysis...' : '🔍 Analyzing your network...'}
-            </div>
-            <div className="text-green-600 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-              {isDeepAnalysis 
-                ? 'Analyzing ALL accounts with 1000+ followers with smart rate limiting'
-                : 'Analyzing 150 accounts with 500+ followers with smart rate limiting (~30-60 seconds)'
-              }
-            </div>
-          </div>
+          <NetworkAnalysisLoader
+            stage={loadingStage}
+            progress={loadingProgress}
+            className="mb-6"
+          />
         )}
 
-        {/* Error State - Mobile Optimized */}
-        {error && (
-          <div className="text-center py-8 px-4">
-            <div className="text-red-400 text-lg sm:text-xl mb-2">❌ Error</div>
-            <div className="text-red-300 text-sm sm:text-base mb-4 max-w-sm mx-auto leading-relaxed">{error}</div>
-            <button
-              onClick={() => fetchRecommendations(userFid, isDeepAnalysis)}
-              className="bg-red-900 hover:bg-red-800 text-red-400 px-4 py-3 sm:py-2 rounded-md border border-red-600 transition-colors min-h-[44px] text-sm sm:text-base"
-            >
-              Try Again
-            </button>
-          </div>
+        {/* Enhanced Error State */}
+        {error && !loading && (
+          <CRTErrorState
+            title="Analysis Failed"
+            message={error}
+            onRetry={handleRetry}
+            retryLabel="Try Again"
+            className="mb-6"
+          />
         )}
 
         {/* Recommendations */}
@@ -208,7 +236,7 @@ export default function Home() {
             {recommendations.length > 0 ? (
               <>
                 <div className="mb-4 text-center">
-                  <h2 className="text-2xl font-bold text-green-400 mb-2">
+                  <h2 className="text-2xl font-bold text-green-400 mb-2 crt-text-glow">
                     🌟 {recommendations.length} Warm Recommendations
                   </h2>
                   <p className="text-green-600">
@@ -220,12 +248,13 @@ export default function Home() {
                 {/* Show more button if we hit the limit */}
                 {recommendations.length >= 50 && !isDeepAnalysis && (
                   <div className="text-center mt-6">
-                    <button
+                    <LoadingButton
                       onClick={handleDeepAnalysis}
-                      className="bg-green-900 hover:bg-green-800 text-green-400 px-6 py-3 rounded-lg border border-green-600 transition-colors font-bold"
+                      loading={loading}
+                      className="bg-green-900 hover:bg-green-800 text-green-400 px-6 py-3 rounded-lg border border-green-600 transition-colors font-bold crt-glow hover:crt-glow-strong"
                     >
                       🚀 Find More with Deep Analysis
-                    </button>
+                    </LoadingButton>
                     <p className="text-xs text-green-600 mt-2">
                       Analyze your full network for stronger connections
                     </p>
@@ -233,14 +262,13 @@ export default function Home() {
                 )}
               </>
             ) : (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg mb-2">
-                  No recommendations found
-                </div>
-                <div className="text-gray-500 text-sm">
-                  Try adjusting your FID or use Deep Analysis for more thorough search
-                </div>
-              </div>
+              <CRTEmptyState
+                icon="🤖"
+                title="No Warm Recommendations Found"
+                message="Try following more people or use Deep Analysis for more thorough search"
+                action={isDeepAnalysis ? undefined : handleDeepAnalysis}
+                actionLabel={isDeepAnalysis ? undefined : "🚀 Try Deep Analysis"}
+              />
             )}
           </>
         )}

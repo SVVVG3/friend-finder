@@ -20,34 +20,34 @@ export const metadata: Metadata = {
   authors: [{ name: "Friend Finder" }],
   creator: "Friend Finder",
   publisher: "Friend Finder",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
+  robots: "index, follow",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Friend Finder | Farcaster Network Analysis",
+    description: "Discover warm connections and analyze one-way follows in your Farcaster network",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Friend Finder | Farcaster Network Analysis",
+    description: "Discover warm connections and analyze one-way follows in your Farcaster network",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Friend Finder",
   },
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-capable": "yes",
-  },
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#000000' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
-  colorScheme: 'dark',
-}
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
 
 export default function RootLayout({
   children,
@@ -57,12 +57,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark overflow-x-hidden">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen text-green-400 overflow-x-hidden w-full`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen text-green-400 overflow-x-hidden w-full pb-20 sm:pb-24`}
       >
-        <Nav />
         <main className="min-h-screen w-full overflow-x-hidden">
           {children}
         </main>
+        <Nav />
       </body>
     </html>
   );
