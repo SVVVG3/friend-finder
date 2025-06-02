@@ -65,24 +65,25 @@ Following the 19 tasks outlined in tasks.md:
 ## Current Status / Progress Tracking
 
 **Current Task**: Task 12 - Create OneWayList component ⭐ **READY TO START**
-**Status**: Implemented major performance optimizations to reduce analysis time from 392 seconds to under 60 seconds. Fixed image handling issues. Ready to proceed with Task 12.
+**Status**: 🚨 **CRITICAL FIX APPLIED** - Fixed deep analysis early termination bug that was stopping at only 200 accounts instead of analyzing the full 1200 selected accounts. Now will find those hidden high-mutual connections.
 
-**🚀 MAJOR PERFORMANCE OPTIMIZATIONS COMPLETED:**
-- ✅ **Smart Account Selection**: Filter out bots (<100 followers) and mega-accounts (>100K followers)
-- ✅ **Sweet Spot Targeting**: Prioritize accounts with 1K-20K followers (best mutual discovery ratio)
-- ✅ **Reduced Scope**: Deep mode now analyzes 800 accounts (vs 2000), Standard mode 300 accounts (vs 500)
-- ✅ **Batch Processing**: Process accounts in batches of 25 with optimized delays
-- ✅ **Optimized Follower Limits**: Reduced from 50-150 to 30-40 followers per account
-- ✅ **Smart Rate Limiting**: 100ms delays every 10 requests, 200ms between batches
-- ✅ **Estimated Performance**: ~60 seconds for deep analysis (vs 392 seconds)
+**🚨 CRITICAL BUG FIXED:**
+- **Issue Discovered**: Early termination was stopping deep analysis at only 200/1200 accounts (17%)
+- **User Impact**: Missing people with higher mutual counts (user only seeing 44 max mutuals)
+- **Root Cause**: Aggressive early termination logic designed for performance was sabotaging quality
+- **Fix Applied**: 
+  - ✅ **Deep Analysis**: NO early termination - analyze full 1200 selected accounts
+  - ✅ **Standard Analysis**: Conservative early termination at 400+ accounts (vs 200)
+  - ✅ **Increased Scope**: Deep mode now selects 1200 accounts (vs 800)
+  - ✅ **Better Logging**: More frequent progress updates to track completion
 
-**📷 IMAGE HANDLING IMPROVEMENTS:**
-- ✅ **Enhanced IPFS Support**: Added multiple IPFS gateway patterns
-- ✅ **Problematic Domain Detection**: Automatic fallback for IPFS and NFT domains
-- ✅ **Retry Logic**: Smart retry for regular domains, immediate fallback for known problematic ones
-- ✅ **SVG Support**: Added dangerouslyAllowSVG for broader image format support
+**🎯 EXPECTED IMPROVEMENTS:**
+- **Full Network Analysis**: Will now analyze 1200 high-potential accounts (vs 200)
+- **Higher Mutual Discovery**: Should find people with 60-100+ mutual connections  
+- **True Deep Analysis**: No premature stopping until all selected accounts processed
+- **Better Results**: Users with large networks will see dramatically better recommendations
 
-**Next Steps**: Test the optimized performance and proceed with Task 12 - Create OneWayList component.
+**Next Steps**: Test the fixed deep analysis and proceed with Task 12 when satisfied with results.
 
 ## Executor's Feedback or Assistance Requests
 

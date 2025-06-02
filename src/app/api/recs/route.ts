@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
         const bScore = b.followerCount >= 1000 && b.followerCount <= 20000 ? b.followerCount : b.followerCount * 0.5
         return bScore - aScore
       })
-      .slice(0, deepParam ? 800 : 300) // Deep: 800 accounts, Standard: 300 accounts
+      .slice(0, deepParam ? 1200 : 300) // Deep: 1200 accounts, Standard: 300 accounts
     
     console.log(`🧠 Smart selection: ${smartSelection.length} high-potential accounts (filtered from ${allFollowing.length})`)
 
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
           processedCount++
           const progress = Math.round((processedCount / smartSelection.length) * 100)
           
-          if (processedCount % 50 === 0) {
+          if (processedCount % 100 === 0 || (processedCount % 50 === 0 && processedCount <= 200)) {
             console.log(`🔗 [${progress}%] Progress: ${processedCount}/${smartSelection.length} accounts processed`)
           }
           
@@ -187,11 +187,11 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      // Check for early termination after each batch
-      if (processedCount >= 200 && mutualCandidates.size > limit * 10) {
-        const highQualityCount = Array.from(mutualCandidates.values()).filter(u => (u.mutualCount || 0) >= 5).length
-        if (highQualityCount >= limit * 3) {
-          console.log(`🎯 Early termination: Found ${highQualityCount} high-quality recommendations, stopping for performance`)
+      // Check for early termination after each batch (only for standard analysis)
+      if (!deepParam && processedCount >= 400 && mutualCandidates.size > limit * 15) {
+        const highQualityCount = Array.from(mutualCandidates.values()).filter(u => (u.mutualCount || 0) >= 10).length
+        if (highQualityCount >= limit * 5) {
+          console.log(`🎯 Early termination (standard mode): Found ${highQualityCount} high-quality recommendations, stopping for performance`)
           break
         }
       }
