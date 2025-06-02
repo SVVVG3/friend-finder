@@ -20,7 +20,6 @@ export default function OneWayPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<string>('466111')
-  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -34,10 +33,8 @@ export default function OneWayPage() {
         console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
         console.log('✅ Frame ready called successfully - splash screen dismissed')
-        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
-        setFrameReady(true) // Continue anyway to avoid blocking
       }
     }
     
@@ -126,8 +123,6 @@ export default function OneWayPage() {
         totalFollowers: followersData.followers.length,
         mutualConnections: analysis.mutualCount
       })
-
-      // Frame ready is now called immediately on mount, not here
 
     } catch (err) {
       console.error('❌ One-way analysis failed:', err)
