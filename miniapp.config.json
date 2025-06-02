@@ -1,0 +1,12 @@
+{
+  "name": "Friend Finder",
+  "description": "Discover warm connections and manage your Farcaster network. Find mutual follows and one-way relationships.",
+  "icon": "/favicon.ico",
+  "path": "/",
+  "frame": true,
+  "fullscreen": true,
+  "version": "1.0.0",
+  "author": "Friend Finder Team",
+  "category": "social",
+  "keywords": ["farcaster", "social", "networking", "connections", "friends"]
+} 
