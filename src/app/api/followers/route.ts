@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
 
     console.log(`📥 Fetching ALL followers for FID: ${fid} (paginated)`)
 
-    // Fetch ALL followers using pagination with small batches
+    // Fetch ALL followers using pagination with larger batches
     const allFollowers: any[] = []
     let cursor: string | undefined = undefined
     let pageCount = 0
-    const maxPages = 40 // Safety limit (40 * 25 = 1000 max followers)
-    const batchSize = 25 // Small batch size to avoid API errors
+    const maxPages = 200 // Much higher limit (200 * 100 = 20000 max, but will stop when no more data)
+    const batchSize = 100 // Increased batch size for better efficiency
 
     do {
       try {
@@ -76,4 +76,4 @@ export async function GET(request: NextRequest) {
       details: error instanceof Error ? error.stack : undefined
     }, { status: 500 })
   }
-} 
+}

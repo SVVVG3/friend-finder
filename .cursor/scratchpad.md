@@ -260,6 +260,16 @@ Following the 19 tasks outlined in tasks.md:
 
 **Task 13 STATUS**: ✅ **COMPLETED** - One-way analysis page created with asymmetric follow analysis, API endpoints (/api/followers, /api/following), CRT theme, stats grid, and loading states.
 
+**🚨 CRITICAL PAGINATION FIX - COMPLETE ANALYSIS:**
+- **Problem**: 400 Bad Request errors even with 200 limit, incomplete analysis with limited data
+- **User Insight**: "we should be showing all of their following/followers though... do we need to make multiple api calls in smaller amounts?"
+- **Solution**: Implemented pagination with 25-item batches to fetch ALL data
+- **Benefits**: 
+  - Complete one-way analysis (up to 1000 followers/following each)
+  - No more API rate limit errors with small batch sizes
+  - Proper pagination with cursors and error handling
+  - Progressive fetching with 100ms delays between pages
+
 **Task 14 READY**: ⭐ **STARTING NEXT** - Create Nav component for simple navigation between home page and one-way page.
 
 ## Lessons
