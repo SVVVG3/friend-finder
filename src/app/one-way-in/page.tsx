@@ -233,7 +233,7 @@ export default function OneWayInPage() {
     if (userFid && userFid.trim() !== '') {
       analyzeOneWayIn(userFid)
     }
-  }, []) // Empty dependency array - only run on mount
+  }, [userFid, analyzeOneWayIn]) // Include dependencies but function is memoized
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">

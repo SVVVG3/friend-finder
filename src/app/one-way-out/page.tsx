@@ -124,7 +124,7 @@ export default function OneWayOutPage() {
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
-  const analyzeOneWayOut = async (fid: number) => {
+  const analyzeOneWayOut = React.useCallback(async (fid: number) => {
     try {
       setLoading(true)
       setError(null)
@@ -183,7 +183,7 @@ export default function OneWayOutPage() {
       setLoading(false)
       setLoadingStage('Initializing...')
     }
-  }
+  }, [])
 
   // Load data on mount - single useEffect, no dependency loops
   useEffect(() => {
@@ -191,7 +191,7 @@ export default function OneWayOutPage() {
     if (userFid && userFid > 0) {
       analyzeOneWayOut(userFid)
     }
-  }, []) // Empty dependency array - only run on mount
+  }, [userFid, analyzeOneWayOut]) // Include dependencies but function is memoized
 
   // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {

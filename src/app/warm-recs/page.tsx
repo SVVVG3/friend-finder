@@ -30,7 +30,7 @@ export default function Home() {
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
 
-  const fetchRecommendations = async (fid: number, deep: boolean = false) => {
+  const fetchRecommendations = React.useCallback(async (fid: number, deep: boolean = false) => {
     try {
       setLoading(true)
       setError(null)
@@ -85,13 +85,13 @@ export default function Home() {
       setLoadingProgress(0)
       setLoadingStage('Initializing...')
     }
-  }
+  }, [])
 
   // Load recommendations on mount and notify frame ready
   useEffect(() => {
     // Only run once on mount
     fetchRecommendations(userFid)
-  }, []) // Empty dependency array - only run on mount
+  }, [userFid, fetchRecommendations]) // Include dependencies but function is memoized
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFid = parseInt(e.target.value) || 466111

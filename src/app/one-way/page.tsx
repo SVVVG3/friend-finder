@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import Image from 'next/image'
 import OneWayList, { OneWayUser } from '../../../components/OneWayList'
 import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
