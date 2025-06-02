@@ -41,8 +41,8 @@ function OneWayInCard({
             <Image 
               src={pfpUrl} 
               alt={`${displayName} avatar`}
-              width={40}
-              height={40}
+              width={48}
+              height={48}
               className="avatar-img"
               onError={() => setImageError(true)}
               unoptimized={true}
@@ -501,27 +501,27 @@ export default function OneWayInPage() {
         }
 
         .user-card {
-          background: rgba(0, 255, 0, 0.03);
-          border: 1px solid #00aa00;
-          border-radius: 6px;
-          padding: 12px;
-          margin-bottom: 12px;
+          background: rgba(0, 255, 0, 0.05);
+          border: 1px solid #00ff00;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 16px;
           font-family: 'Monaco', 'Menlo', monospace;
-          box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+          box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
           transition: all 0.2s ease;
         }
 
         .user-card:hover {
-          background: rgba(0, 255, 0, 0.06);
-          box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
-          transform: translateY(-1px);
+          background: rgba(0, 255, 0, 0.1);
+          box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+          transform: translateY(-2px);
         }
 
         .user-header {
           display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 8px;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 12px;
         }
 
         .user-avatar {
@@ -529,48 +529,41 @@ export default function OneWayInPage() {
         }
 
         .avatar-img {
-          width: 40px;
-          height: 40px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
-          border: 1px solid #00aa00;
+          border: 1px solid #00ff00;
         }
 
         .avatar-placeholder {
-          width: 40px;
-          height: 40px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
-          border: 1px solid #00aa00;
-          background: rgba(0, 255, 0, 0.05);
+          border: 1px solid #00ff00;
+          background: rgba(0, 255, 0, 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #00aa00;
+          color: #00ff00;
           font-weight: bold;
-          font-size: 14px;
+          font-size: 18px;
         }
 
         .user-info {
           flex: 1;
-          min-width: 0;
         }
 
         .user-name {
           color: #00ff00;
-          margin: 0 0 2px 0;
-          font-size: 14px;
+          margin: 0 0 4px 0;
+          font-size: 16px;
           font-weight: bold;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
 
         .user-username {
           color: #00cc00;
-          margin: 0;
-          font-size: 12px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          margin: 0 0 4px 0;
+          font-size: 14px;
         }
 
         .user-actions {
@@ -581,55 +574,55 @@ export default function OneWayInPage() {
           background: rgba(0, 255, 0, 0.1);
           border: 1px solid #00ff00;
           color: #00ff00;
-          padding: 6px 12px;
+          padding: 8px 16px;
           border-radius: 4px;
           cursor: pointer;
           font-family: inherit;
-          font-size: 12px;
+          font-size: 14px;
           transition: all 0.2s ease;
         }
 
         .follow-btn:hover {
           background: rgba(0, 255, 0, 0.2);
-          box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+          box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
 
         .user-bio {
-          margin-bottom: 8px;
-          padding: 6px 8px;
+          margin-bottom: 12px;
+          padding: 8px;
           background: rgba(0, 255, 0, 0.02);
           border-radius: 4px;
-          border-left: 2px solid #00aa00;
+          border-left: 3px solid #00aa00;
         }
 
         .user-bio p {
           color: #00cc00;
-          font-size: 12px;
+          font-size: 14px;
           margin: 0;
-          line-height: 1.3;
+          line-height: 1.4;
         }
 
         .user-stats {
           display: flex;
-          gap: 16px;
+          gap: 24px;
         }
 
         .stat {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 2px;
+          align-items: flex-start;
+        }
+
+        .stat-label {
+          color: #00aa00;
+          font-size: 12px;
+          margin-bottom: 2px;
         }
 
         .stat-value {
           color: #00ff00;
           font-weight: bold;
-          font-size: 12px;
-        }
-
-        .stat-label {
-          color: #00aa00;
-          font-size: 10px;
+          font-size: 14px;
         }
 
         .loading-overlay {
