@@ -111,7 +111,7 @@ export default function OneWayInPage() {
   const [oneWayIn, setOneWayIn] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('')
+  const [userFid, setUserFid] = useState<string>('466111')
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -134,6 +134,11 @@ export default function OneWayInPage() {
 
   // Analyze one-way IN relationships
   const analyzeOneWayIn = React.useCallback(async (fid: string) => {
+    if (!fid || fid.trim() === '') {
+      console.log('⚠️ No FID provided, skipping analysis')
+      return
+    }
+    
     setLoading(true)
     setError(null)
     setLoadingStage('Initializing analysis...')
@@ -145,8 +150,8 @@ export default function OneWayInPage() {
       
       // Fetch both followers and following in parallel
       const [followingResponse, followersResponse] = await Promise.all([
-        fetch(`/api/following?fid=${fid}`),
-        fetch(`/api/followers?fid=${fid}`)
+        fetch(`/api/following?fid=${fid.trim()}`),
+        fetch(`/api/followers?fid=${fid.trim()}`)
       ])
 
       if (!followingResponse.ok) {
@@ -189,8 +194,10 @@ export default function OneWayInPage() {
         oneWayInCount: oneWayInUsers.length
       })
 
-      // Notify Farcaster that frame is ready when content loads
-      await notifyFrameReady()
+      // Only notify frame ready when content is successfully loaded
+      if (oneWayInUsers.length > 0 || followingData.following.length > 0) {
+        await notifyFrameReady()
+      }
     } catch (err) {
       console.error('❌ One-way IN analysis failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
@@ -220,23 +227,13 @@ export default function OneWayInPage() {
     }
   }
 
-  // Load data on mount and notify frame ready
+  // Load data on mount - single useEffect, no dependency loops
   useEffect(() => {
-    const initializePage = async () => {
-      await analyzeOneWayIn(userFid)
-      // Additional frame ready call for initial page load
-      if (!loading) {
-        await notifyFrameReady()
-      }
+    // Only run if we have a valid FID
+    if (userFid && userFid.trim() !== '') {
+      analyzeOneWayIn(userFid)
     }
-    
-    initializePage()
-  }, [userFid, analyzeOneWayIn, loading])
-
-  useEffect(() => {
-    // Notify Farcaster frame is ready
-    notifyFrameReady()
-  }, [analyzeOneWayIn, loading])
+  }, []) // Empty dependency array - only run on mount
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">

@@ -185,18 +185,13 @@ export default function OneWayOutPage() {
     }
   }
 
-  // Load data on mount and notify frame ready
+  // Load data on mount - single useEffect, no dependency loops
   useEffect(() => {
-    const initializePage = async () => {
-      await analyzeOneWayOut(userFid)
-      // Additional frame ready call for initial page load
-      if (!loading) {
-        await notifyFrameReady()
-      }
+    // Only run if we have a valid FID
+    if (userFid && userFid > 0) {
+      analyzeOneWayOut(userFid)
     }
-    
-    initializePage()
-  }, [userFid, loading])
+  }, []) // Empty dependency array - only run on mount
 
   // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {

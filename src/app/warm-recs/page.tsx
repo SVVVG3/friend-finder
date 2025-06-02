@@ -69,8 +69,10 @@ export default function Home() {
         setAnalysisStats(data.debug)
         setIsDeepAnalysis(deep)
         
-        // Notify Farcaster that frame is ready when content loads
-        await notifyFrameReady()
+        // Only notify Farcaster that frame is ready when we have content to show
+        if (data.recommendations && data.recommendations.length > 0) {
+          await notifyFrameReady()
+        }
       } else {
         throw new Error(data.message || 'Failed to get recommendations')
       }
@@ -87,16 +89,9 @@ export default function Home() {
 
   // Load recommendations on mount and notify frame ready
   useEffect(() => {
-    const initializePage = async () => {
-      await fetchRecommendations(userFid)
-      // Additional frame ready call for initial page load
-      if (!loading) {
-        await notifyFrameReady()
-      }
-    }
-    
-    initializePage()
-  }, [userFid, loading])
+    // Only run once on mount
+    fetchRecommendations(userFid)
+  }, []) // Empty dependency array - only run on mount
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFid = parseInt(e.target.value) || 466111

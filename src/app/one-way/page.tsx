@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import OneWayList, { OneWayUser } from '../../../components/OneWayList'
+import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -18,7 +20,7 @@ export default function OneWayPage() {
   const [oneWayIn, setOneWayIn] = useState<OneWayUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('')
+  const [userFid, setUserFid] = useState<string>('466111')
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -51,6 +53,11 @@ export default function OneWayPage() {
 
   // Analyze one-way relationships
   const analyzeOneWayRelationships = async (fid: string) => {
+    if (!fid || fid.trim() === '') {
+      console.log('⚠️ No FID provided, skipping analysis')
+      return
+    }
+    
     setLoading(true)
     setError(null)
     
@@ -59,8 +66,8 @@ export default function OneWayPage() {
       
       // Fetch both followers and following in parallel
       const [followingResponse, followersResponse] = await Promise.all([
-        fetch(`/api/following?fid=${fid}`),
-        fetch(`/api/followers?fid=${fid}`)
+        fetch(`/api/following?fid=${fid.trim()}`),
+        fetch(`/api/followers?fid=${fid.trim()}`)
       ])
 
       if (!followingResponse.ok) {
@@ -102,6 +109,11 @@ export default function OneWayPage() {
         totalFollowers: followersData.followers.length,
         mutualConnections: analysis.mutualCount
       })
+
+      // Only notify frame ready when we have data to show
+      if (analysis.oneWayOut.length > 0 || analysis.oneWayIn.length > 0 || followingData.following.length > 0) {
+        await notifyFrameReady()
+      }
 
     } catch (err) {
       console.error('❌ One-way analysis failed:', err)
