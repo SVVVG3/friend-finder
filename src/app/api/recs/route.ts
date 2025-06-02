@@ -40,8 +40,9 @@ export async function GET(request: NextRequest) {
     // Extract FID from query parameters
     const { searchParams } = new URL(request.url)
     const fidParam = searchParams.get('fid')
-    const limitParam = searchParams.get('limit') || '10'
+    const limitParam = searchParams.get('limit') || '50' // Increased default to 50
     const debugParam = searchParams.get('debug') === 'true'
+    const deepParam = searchParams.get('deep') === 'true' // New: deep analysis flag
     
     if (!fidParam) {
       return NextResponse.json({
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userFid = parseInt(fidParam)
-    const limit = Math.min(parseInt(limitParam), 50) // Cap at 50 recommendations
+    const limit = Math.min(parseInt(limitParam), 100) // Cap at 100 recommendations
     
     if (isNaN(userFid) || userFid <= 0) {
       return NextResponse.json({
@@ -62,38 +63,70 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log(`🎯 Generating recommendations for FID ${userFid} (limit: ${limit})`)
+    console.log(`🎯 Generating ${deepParam ? 'DEEP' : 'standard'} recommendations for FID ${userFid} (limit: ${limit})`)
 
-    // Step 1: Get user's following list (people they already follow)
-    console.log('📋 Fetching user following list...')
-    const userFollowing = await getFollowing(userFid, 100) // Get first 100 follows
+    // Step 1: Get FULL user's following list with pagination
+    console.log('📋 Fetching COMPLETE user following list...')
+    let allFollowing: any[] = []
+    let cursor: string | undefined = undefined
+    let pageCount = 0
+    const maxPages = deepParam ? 50 : 10 // Deep analysis: up to 50 pages (2500 users), standard: 10 pages (500 users)
     
-    if (userFollowing.data.length === 0) {
+    do {
+      try {
+        const followingPage = await getFollowing(userFid, 50, cursor) // 50 per page
+        allFollowing.push(...followingPage.data)
+        cursor = followingPage.nextCursor
+        pageCount++
+        
+        console.log(`📄 Page ${pageCount}: +${followingPage.data.length} users (total: ${allFollowing.length})`)
+        
+        if (pageCount >= maxPages) {
+          console.log(`⏹️ Reached max pages (${maxPages}), stopping pagination`)
+          break
+        }
+      } catch (error) {
+        console.warn(`⚠️ Failed to fetch page ${pageCount + 1}:`, error)
+        break
+      }
+    } while (cursor && pageCount < maxPages)
+    
+    if (allFollowing.length === 0) {
       return NextResponse.json({
         success: true,
         userFid,
-        totalRecommendations: 0,
         recommendations: [],
         processingTime: Date.now() - startTime,
         message: 'User has no following connections to base recommendations on'
       })
     }
 
-    console.log(`✅ Found ${userFollowing.data.length} users that FID ${userFid} follows`)
+    console.log(`✅ Found ${allFollowing.length} total users that FID ${userFid} follows`)
 
-    // Step 2: For each person the user follows, find people who also follow them (2nd degree connections)
+    // Step 2: Prioritize and select users to analyze (by follower count)
+    const prioritizedFollowing = allFollowing
+      .sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)) // Sort by follower count desc
+      .slice(0, deepParam ? 300 : 100) // Deep: analyze 300, standard: 100
+    
+    console.log(`🎯 Analyzing top ${prioritizedFollowing.length} most-followed accounts for mutual connections`)
+
+    // Step 3: For each prioritized person, find people who also follow them (2nd degree connections)
     console.log('🔍 Finding mutual connections for recommendations...')
     
     const mutualCandidates = new Map<number, UserWithMutuals>()
-    const userFollowsFids = new Set(userFollowing.data.map(u => u.fid))
+    const userFollowsFids = new Set(allFollowing.map(u => u.fid))
+    let processedCount = 0
     
     // Process each followed user to find their followers (potential recommendations)
-    for (const followedUser of userFollowing.data.slice(0, 20)) { // Limit to first 20 for performance
+    for (const followedUser of prioritizedFollowing) {
       try {
-        console.log(`🔗 Checking mutuals for ${followedUser.username} (FID ${followedUser.fid})`)
+        processedCount++
+        const progress = Math.round((processedCount / prioritizedFollowing.length) * 100)
+        console.log(`🔗 [${progress}%] Checking mutuals for ${followedUser.username} (FID ${followedUser.fid}, ${followedUser.followerCount} followers)`)
         
-        // Get followers of this person (people who also follow them = potential recommendations)
-        const followers = await getFollowers(followedUser.fid, 50) // Get their followers for mutual connections
+        // Get more followers for popular accounts
+        const followersLimit = followedUser.followerCount > 10000 ? 100 : 75
+        const followers = await getFollowers(followedUser.fid, followersLimit)
         
         console.log(`📊 Found ${followers.data.length} followers for ${followedUser.username}`)
         
@@ -106,7 +139,9 @@ export async function GET(request: NextRequest) {
           
           // Skip if this is the original user or someone they already follow
           if (potentialRec.fid === userFid || userFollowsFids.has(potentialRec.fid)) {
-            console.log(`⏭️ Skipping ${potentialRec.username} (FID ${potentialRec.fid}) - ${potentialRec.fid === userFid ? 'is original user' : 'already following'}`)
+            if (debugParam && potentialRec.fid === userFid) {
+              console.log(`⏭️ Skipping ${potentialRec.username} (FID ${potentialRec.fid}) - is original user`)
+            }
             continue
           }
 
@@ -114,13 +149,17 @@ export async function GET(request: NextRequest) {
           if (mutualCandidates.has(potentialRec.fid)) {
             const existing = mutualCandidates.get(potentialRec.fid)!
             existing.mutualCount = (existing.mutualCount || 0) + 1
-            console.log(`➕ Updated mutual count for ${potentialRec.username}: ${existing.mutualCount}`)
+            if (debugParam && existing.mutualCount >= 5) {
+              console.log(`➕ Updated mutual count for ${potentialRec.username}: ${existing.mutualCount}`)
+            }
           } else {
             mutualCandidates.set(potentialRec.fid, {
               ...potentialRec,
               mutualCount: 1
             })
-            console.log(`✨ New recommendation candidate: ${potentialRec.username} (FID ${potentialRec.fid})`)
+            if (debugParam) {
+              console.log(`✨ New recommendation candidate: ${potentialRec.username} (FID ${potentialRec.fid})`)
+            }
           }
         }
       } catch (error) {
@@ -129,24 +168,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`🎯 Found ${mutualCandidates.size} potential recommendations`)
+    console.log(`🎯 Found ${mutualCandidates.size} potential recommendations from ${processedCount} analyzed accounts`)
 
-    // Step 3: Filter and enhance recommendations
+    // Step 4: Filter and enhance recommendations (require 2+ mutuals for deep analysis)
+    const minMutuals = deepParam ? 2 : 1
     const recommendations: UserWithMutuals[] = Array.from(mutualCandidates.values())
-      .filter(user => (user.mutualCount || 0) >= 1) // Require at least 1 mutual connection for demo
+      .filter(user => (user.mutualCount || 0) >= minMutuals)
       .map(user => ({
         ...user,
         score: calculateRecommendationScore(user)
       }))
 
-    // Step 4: Sort recommendations using our sorting utilities
-    console.log('📊 Sorting recommendations...')
+    console.log(`📊 ${recommendations.length} candidates meet ${minMutuals}+ mutual requirement`)
+
+    // Step 5: Sort recommendations using our sorting utilities
+    console.log('📊 Sorting recommendations by score...')
     const sortedRecommendations = sortWarmRecommendations(recommendations)
     
-    // Step 5: Get top N recommendations
+    // Step 6: Get top N recommendations
     const topRecommendations = getTopUsers(sortedRecommendations, limit)
 
-    // Enhanced profile data for recommendations
+    // Step 7: Enhanced profile data for recommendations
     console.log('🎨 Enriching recommendation profiles...')
     const enrichedRecommendations = await Promise.all(
       topRecommendations.map(async (rec) => {
@@ -167,6 +209,14 @@ export async function GET(request: NextRequest) {
     const endTime = Date.now()
     const totalTime = endTime - startTime
 
+    // Log top results
+    if (enrichedRecommendations.length > 0) {
+      console.log(`🏆 Top recommendations:`)
+      enrichedRecommendations.slice(0, 5).forEach((rec, i) => {
+        console.log(`  ${i+1}. ${rec.username} - ${rec.mutualCount} mutuals (score: ${rec.score})`)
+      })
+    }
+
     console.log(`✅ Generated ${enrichedRecommendations.length} recommendations in ${totalTime}ms`)
 
     return NextResponse.json({
@@ -175,10 +225,13 @@ export async function GET(request: NextRequest) {
       ...(debugParam && {
         debug: {
           userFid: userFid,
-          totalFollowing: userFollowing.data.length,
+          totalFollowing: allFollowing.length,
+          analyzedAccounts: processedCount,
           totalCandidates: mutualCandidates.size,
           filteredCandidates: recommendations.length,
+          minMutuals: minMutuals,
           processingTimeMs: totalTime,
+          deepAnalysis: deepParam,
           cacheStats: profileCache.getStats()
         }
       })

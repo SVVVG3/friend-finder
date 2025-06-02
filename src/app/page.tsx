@@ -6,251 +6,241 @@ import { UserWithMutuals } from '../../utils/sort'
 
 export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<number>(3) // Default to Dan Romero for demo
+  const [userFid, setUserFid] = useState<number>(466111) // Your FID
+  const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
+  const [analysisStats, setAnalysisStats] = useState<any>(null)
 
-  const fetchRecommendations = async (fid: number) => {
+  const fetchRecommendations = async (fid: number, deep: boolean = false) => {
     try {
       setLoading(true)
       setError(null)
+      setAnalysisStats(null)
       
-      const response = await fetch(`/api/recs?fid=${fid}&debug=true`)
+      const deepParam = deep ? '&deep=true' : ''
+      const response = await fetch(`/api/recs?fid=${fid}&limit=50&debug=true${deepParam}`)
       
       if (!response.ok) {
         throw new Error(`Failed to fetch recommendations: ${response.status}`)
       }
-      
+
       const data = await response.json()
-      setRecommendations(data.recommendations || [])
+      
+      if (data.success) {
+        setRecommendations(data.recommendations || [])
+        setAnalysisStats(data.debug)
+        setIsDeepAnalysis(deep)
+      } else {
+        throw new Error(data.message || 'Failed to get recommendations')
+      }
     } catch (err) {
       console.error('Error fetching recommendations:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load recommendations')
+      setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      setRecommendations([])
     } finally {
       setLoading(false)
     }
   }
 
+  // Load recommendations on mount
   useEffect(() => {
     fetchRecommendations(userFid)
   }, [userFid])
 
-  const handleFollowUser = (fid: number) => {
-    // For now, just show an alert - we'll integrate with Farcaster later
-    alert(`Following user with FID: ${fid}`)
+  const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFid = parseInt(e.target.value) || 466111
+    setUserFid(newFid)
   }
 
-  const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFid = parseInt(e.target.value)
-    if (!isNaN(newFid) && newFid > 0) {
-      setUserFid(newFid)
-    }
+  const handleFidSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    fetchRecommendations(userFid, isDeepAnalysis)
+  }
+
+  const handleDeepAnalysis = () => {
+    fetchRecommendations(userFid, true)
+  }
+
+  const handleStandardAnalysis = () => {
+    fetchRecommendations(userFid, false)
   }
 
   return (
-    <div className="app-container">
-      <div className="app-content">
-        <header className="app-header">
-          <h1 className="app-title">
-            🔍 Friend Finder
+    <div className="min-h-screen bg-black text-green-400 font-mono p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2 tracking-wider">
+            🔍 FRIEND FINDER
           </h1>
-          <p className="app-subtitle">
-            Discover warm connections through your Farcaster network
+          <p className="text-green-300 text-lg">
+            Discover warm connections in your Farcaster network
           </p>
-          
-          <div className="fid-input-section">
-            <label htmlFor="fid-input" className="fid-label">
-              Enter Farcaster ID (FID):
+          <div className="border-t border-green-600 mt-4 w-32 mx-auto"></div>
+        </div>
+
+        {/* FID Input */}
+        <form onSubmit={handleFidSubmit} className="mb-6">
+          <div className="flex justify-center items-center gap-4">
+            <label htmlFor="fid" className="text-green-300">
+              Enter FID:
             </label>
             <input
-              id="fid-input"
               type="number"
+              id="fid"
               value={userFid}
               onChange={handleFidChange}
-              placeholder="e.g. 3"
-              className="fid-input"
-              min="1"
+              className="bg-black border border-green-600 text-green-400 px-3 py-2 rounded-md w-32 focus:outline-none focus:border-green-400"
+              placeholder="Your FID"
             />
             <button
-              onClick={() => fetchRecommendations(userFid)}
-              className="refresh-btn"
+              type="submit"
               disabled={loading}
+              className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-4 py-2 rounded-md border border-green-600 transition-colors"
             >
-              {loading ? '⏳ Loading...' : '🔄 Refresh'}
+              {loading ? 'Analyzing...' : 'Analyze'}
             </button>
           </div>
-        </header>
+        </form>
 
-        <main className="app-main">
-          <WarmRecsList
-            recommendations={recommendations}
-            loading={loading}
-            error={error || undefined}
-            onFollowUser={handleFollowUser}
-          />
-        </main>
-
-        <footer className="app-footer">
-          <p>
-            Built with ❤️ using{' '}
-            <a href="https://neynar.com" target="_blank" rel="noopener noreferrer">
-              Neynar API
-            </a>
-            {' '}and{' '}
-            <a href="https://farcaster.xyz" target="_blank" rel="noopener noreferrer">
-              Farcaster
-            </a>
+        {/* Analysis Mode Controls */}
+        <div className="mb-6 text-center">
+          <div className="inline-flex gap-2 bg-gray-900 p-1 rounded-lg border border-green-600">
+            <button
+              onClick={handleStandardAnalysis}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                !isDeepAnalysis && !loading
+                  ? 'bg-green-900 text-green-400 border border-green-600'
+                  : 'text-green-600 hover:text-green-400'
+              }`}
+            >
+              Standard Analysis
+            </button>
+            <button
+              onClick={handleDeepAnalysis}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                isDeepAnalysis && !loading
+                  ? 'bg-green-900 text-green-400 border border-green-600'
+                  : 'text-green-600 hover:text-green-400'
+              }`}
+            >
+              🚀 Deep Analysis
+            </button>
+          </div>
+          <p className="text-xs text-green-600 mt-2">
+            {isDeepAnalysis 
+              ? 'Deep: Analyzes 300+ accounts, finds 8-15+ mutual connections (30-60s)'
+              : 'Standard: Analyzes 100 accounts, finds 1+ mutual connections (3-10s)'
+            }
           </p>
-        </footer>
+        </div>
+
+        {/* Analysis Stats */}
+        {analysisStats && (
+          <div className="mb-6 p-4 bg-gray-900 border border-green-600 rounded-lg">
+            <h3 className="text-green-400 font-bold mb-2">📊 Analysis Results</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-green-600">Total Following:</span>
+                <div className="text-green-400 font-bold">{analysisStats.totalFollowing?.toLocaleString()}</div>
+              </div>
+              <div>
+                <span className="text-green-600">Analyzed:</span>
+                <div className="text-green-400 font-bold">{analysisStats.analyzedAccounts}</div>
+              </div>
+              <div>
+                <span className="text-green-600">Candidates:</span>
+                <div className="text-green-400 font-bold">{analysisStats.totalCandidates?.toLocaleString()}</div>
+              </div>
+              <div>
+                <span className="text-green-600">Processing:</span>
+                <div className="text-green-400 font-bold">{(analysisStats.processingTimeMs / 1000).toFixed(1)}s</div>
+              </div>
+            </div>
+            {analysisStats.deepAnalysis && (
+              <div className="mt-2 text-xs text-green-600">
+                🚀 Deep analysis: {analysisStats.minMutuals}+ mutual connections required
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mb-4"></div>
+            <div className="text-green-400 text-lg">
+              {isDeepAnalysis ? '🚀 Running deep network analysis...' : '🔍 Analyzing your network...'}
+            </div>
+            <div className="text-green-600 text-sm mt-2">
+              {isDeepAnalysis 
+                ? 'Analyzing 300+ accounts for strongest mutual connections'
+                : 'Finding mutual connections in your network'
+              }
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-8">
+            <div className="text-red-400 text-lg mb-2">❌ Error</div>
+            <div className="text-red-300">{error}</div>
+            <button
+              onClick={() => fetchRecommendations(userFid, isDeepAnalysis)}
+              className="mt-4 bg-red-900 hover:bg-red-800 text-red-400 px-4 py-2 rounded-md border border-red-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Recommendations */}
+        {!loading && !error && (
+          <>
+            {recommendations.length > 0 ? (
+              <>
+                <div className="mb-4 text-center">
+                  <h2 className="text-2xl font-bold text-green-400 mb-2">
+                    🌟 {recommendations.length} Warm Recommendations
+                  </h2>
+                  <p className="text-green-600">
+                    People with mutual connections in your network
+                  </p>
+                </div>
+                <WarmRecsList recommendations={recommendations} />
+                
+                {/* Show more button if we hit the limit */}
+                {recommendations.length >= 50 && !isDeepAnalysis && (
+                  <div className="text-center mt-6">
+                    <button
+                      onClick={handleDeepAnalysis}
+                      className="bg-green-900 hover:bg-green-800 text-green-400 px-6 py-3 rounded-lg border border-green-600 transition-colors font-bold"
+                    >
+                      🚀 Find More with Deep Analysis
+                    </button>
+                    <p className="text-xs text-green-600 mt-2">
+                      Analyze your full network for stronger connections
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg mb-2">
+                  No recommendations found
+                </div>
+                <div className="text-gray-500 text-sm">
+                  Try adjusting your FID or use Deep Analysis for more thorough search
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-
-      <style jsx>{`
-        .app-container {
-          min-height: 100vh;
-          background: #000;
-          color: #00ff00;
-          font-family: 'Monaco', 'Menlo', monospace;
-          padding: 20px;
-        }
-
-        .app-content {
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .app-header {
-          text-align: center;
-          margin-bottom: 40px;
-          padding: 20px;
-          border: 1px solid #00ff00;
-          border-radius: 8px;
-          background: rgba(0, 255, 0, 0.05);
-          box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-        }
-
-        .app-title {
-          font-size: 32px;
-          margin: 0 0 8px 0;
-          text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
-          animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        .app-subtitle {
-          font-size: 16px;
-          color: #00cc00;
-          margin: 0 0 24px 0;
-          opacity: 0.9;
-        }
-
-        .fid-input-section {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          align-items: center;
-        }
-
-        .fid-label {
-          color: #00aa00;
-          font-size: 14px;
-        }
-
-        .fid-input {
-          background: rgba(0, 255, 0, 0.1);
-          border: 1px solid #00ff00;
-          color: #00ff00;
-          padding: 8px 12px;
-          border-radius: 4px;
-          font-family: inherit;
-          font-size: 16px;
-          text-align: center;
-          width: 200px;
-        }
-
-        .fid-input:focus {
-          outline: none;
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .fid-input::placeholder {
-          color: #00aa00;
-          opacity: 0.7;
-        }
-
-        .refresh-btn {
-          background: rgba(0, 255, 0, 0.1);
-          border: 1px solid #00ff00;
-          color: #00ff00;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-family: inherit;
-          font-size: 14px;
-          transition: all 0.2s ease;
-          min-width: 120px;
-        }
-
-        .refresh-btn:hover:not(:disabled) {
-          background: rgba(0, 255, 0, 0.2);
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .refresh-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .app-main {
-          margin-bottom: 40px;
-        }
-
-        .app-footer {
-          text-align: center;
-          padding: 20px;
-          border-top: 1px solid #00ff00;
-          color: #00aa00;
-          font-size: 14px;
-        }
-
-        .app-footer a {
-          color: #00ff00;
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-
-        .app-footer a:hover {
-          color: #00ffff;
-          text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
-        }
-
-        @keyframes glow {
-          from {
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
-          }
-          to {
-            text-shadow: 0 0 20px rgba(0, 255, 0, 1), 0 0 30px rgba(0, 255, 0, 0.5);
-          }
-        }
-
-        @media (max-width: 768px) {
-          .app-container {
-            padding: 10px;
-          }
-          
-          .app-title {
-            font-size: 24px;
-          }
-          
-          .fid-input-section {
-            flex-direction: column;
-            gap: 8px;
-          }
-          
-          .fid-input {
-            width: 100%;
-            max-width: 200px;
-          }
-        }
-      `}</style>
     </div>
   )
 }

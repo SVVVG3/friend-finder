@@ -12,7 +12,9 @@ const nextConfig: NextConfig = {
       'openseauserdata.com',
       'arweave.net',
       'ipfs.io',
-      'media.firefly.land'
+      'media.firefly.land',
+      'ipfs.decentralized-content.com',
+      'nft.orivium.io'
     ],
     remotePatterns: [
       {
@@ -72,6 +74,18 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'media.firefly.land',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ipfs.decentralized-content.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'nft.orivium.io',
         port: '',
         pathname: '/**',
       },
