@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
       'ipfs.decentralized-content.com',
       'nft.orivium.io',
       'takocdn.xyz',
-      'warpcast.com'
+      'warpcast.com',
+      'i.postimg.cc'
     ],
     remotePatterns: [
       {
@@ -170,6 +171,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**.decentralized-content.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.postimg.cc',
         port: '',
         pathname: '/**',
       },

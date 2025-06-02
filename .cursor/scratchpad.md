@@ -144,6 +144,7 @@ Current recommendation algorithm is working correctly but returns 0 results due 
   - takocdn.xyz ✅ Fixed  
   - ipfs.decentralized-content.com ✅ Fixed
   - tba-mobile.mypinata.cloud ✅ Fixed
+  - i.postimg.cc ✅ Fixed
   - Use both `domains` array and `remotePatterns` for comprehensive coverage
   - Wildcard patterns like `**.pinata.cloud` help but specific domains sometimes still needed
 
