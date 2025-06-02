@@ -64,26 +64,40 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Current Status / Progress Tracking
 
-**Current Task**: Task 12 - Create OneWayList component ⭐ **READY TO START**
-**Status**: 🚨 **CRITICAL FIX APPLIED** - Fixed deep analysis early termination bug that was stopping at only 200 accounts instead of analyzing the full 1200 selected accounts. Now will find those hidden high-mutual connections.
+**⚠️ CRITICAL ALGORITHM FLAW DISCOVERED - USER INSIGHT**
 
-**🚨 CRITICAL BUG FIXED:**
-- **Issue Discovered**: Early termination was stopping deep analysis at only 200/1200 accounts (17%)
-- **User Impact**: Missing people with higher mutual counts (user only seeing 44 max mutuals)
-- **Root Cause**: Aggressive early termination logic designed for performance was sabotaging quality
-- **Fix Applied**: 
-  - ✅ **Deep Analysis**: NO early termination - analyze full 1200 selected accounts
-  - ✅ **Standard Analysis**: Conservative early termination at 400+ accounts (vs 200)
-  - ✅ **Increased Scope**: Deep mode now selects 1200 accounts (vs 800)
-  - ✅ **Better Logging**: More frequent progress updates to track completion
+**User's Question**: "Candidate Discovery: For each person you follow, we look at who follows THEM" - shouldn't we be looking at who THEY follow, not who follows them for better recommendations?
 
-**🎯 EXPECTED IMPROVEMENTS:**
-- **Full Network Analysis**: Will now analyze 1200 high-potential accounts (vs 200)
-- **Higher Mutual Discovery**: Should find people with 60-100+ mutual connections  
-- **True Deep Analysis**: No premature stopping until all selected accounts processed
-- **Better Results**: Users with large networks will see dramatically better recommendations
+**ANALYSIS - USER IS 100% CORRECT:**
 
-**Next Steps**: Test the fixed deep analysis and proceed with Task 12 when satisfied with results.
+**Current (FLAWED) Algorithm:**
+- User follows Alice → Find who follows Alice → Recommend Alice's followers
+- Logic: "Find other fans of the same person you like"
+- Problem: Biases toward popular accounts, misses quality connections
+
+**Correct Algorithm Should Be:**
+- User follows Alice → Find who Alice follows → Recommend Alice's following  
+- Logic: "Find people that someone you trust also trusts"
+- Benefits: Discovers people through trusted curators, better quality discovery
+
+**Why This Makes More Sense:**
+1. **Trust-based discovery**: If you follow someone, you trust their judgment about who to follow
+2. **Interest alignment**: People you follow likely follow others with similar interests  
+3. **Network expansion**: Discover new people through the lens of people whose taste you trust
+4. **Quality over popularity**: Current approach biases toward popular people, alternative finds people with good taste regardless of follower count
+
+**✅ CRITICAL FIX IMPLEMENTED SUCCESSFULLY!**
+
+**Changed**: `getFollowers(followedUser.fid)` → `getFollowing(followedUser.fid)`
+
+**🎉 TRUST-BASED DISCOVERY RESULTS:**
+- **mjc716**: **162 mutuals** (NEW RECORD!) 🚀
+- **revealcam**: **97 mutuals** 
+- **gmonchain.eth**: **92 mutuals**
+- **nickysap**: **86 mutuals**
+- **jamai**: **85 mutuals**
+
+**BREAKTHROUGH**: Trust-based algorithm finds even higher quality connections than previous follower-based approach! User's insight completely transformed recommendation quality.
 
 ## Executor's Feedback or Assistance Requests
 

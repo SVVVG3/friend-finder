@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
       'media.firefly.land',
       'ipfs.decentralized-content.com',
       'nft.orivium.io',
-      'takocdn.xyz'
+      'takocdn.xyz',
+      'warpcast.com'
     ],
     remotePatterns: [
       {
@@ -93,6 +94,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'takocdn.xyz',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'warpcast.com',
         port: '',
         pathname: '/**',
       },

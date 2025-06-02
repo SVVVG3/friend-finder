@@ -144,15 +144,17 @@ export async function GET(request: NextRequest) {
             console.log(`🔗 [${progress}%] Progress: ${processedCount}/${smartSelection.length} accounts processed`)
           }
           
-          // Optimized follower limits for faster processing
-          let followersLimit = 30 // Reduced default
-          if (followedUser.followerCount > 50000) followersLimit = 40
-          else if (followedUser.followerCount > 10000) followersLimit = 35
-          else if (followedUser.followerCount > 5000) followersLimit = 30
+          // Optimized following limits for faster processing (trust-based discovery)
+          let followingLimit = 30 // Reduced default
+          if (followedUser.followerCount > 50000) followingLimit = 40
+          else if (followedUser.followerCount > 10000) followingLimit = 35
+          else if (followedUser.followerCount > 5000) followingLimit = 30
           
-          const followers = await getFollowers(followedUser.fid, followersLimit)
+          // CRITICAL FIX: Changed from getFollowers to getFollowing for trust-based discovery
+          // User insight: Find people that your trusted network follows, not their fans
+          const following = await getFollowing(followedUser.fid, followingLimit)
           
-          for (const potentialRec of followers.data) {
+          for (const potentialRec of following.data) {
             if (!potentialRec.fid || potentialRec.fid === 0) continue
             if (potentialRec.fid === userFid || userFollowsFids.has(potentialRec.fid)) continue
 
