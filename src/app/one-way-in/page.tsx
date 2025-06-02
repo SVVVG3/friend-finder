@@ -34,35 +34,35 @@ function OneWayInCard({
   } = user
 
   return (
-    <div className="user-card">
-      <div className="user-header">
-        <div className="user-avatar">
+    <div className="bg-black border border-green-400 rounded-lg p-4 mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="flex-shrink-0">
           {pfpUrl && !imageError ? (
             <Image 
               src={pfpUrl} 
               alt={`${displayName} avatar`}
               width={48}
               height={48}
-              className="avatar-img"
+              className="w-12 h-12 rounded-full border border-green-400"
               onError={() => setImageError(true)}
               unoptimized={true}
               priority={false}
             />
           ) : (
-            <div className="avatar-placeholder">
+            <div className="w-12 h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-lg">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
         
-        <div className="user-info">
-          <h4 className="user-name">{displayName}</h4>
-          <p className="user-username">@{username}</p>
+        <div className="flex-1">
+          <h4 className="text-green-400 font-bold text-base mb-1">{displayName}</h4>
+          <p className="text-green-300 text-sm mb-1">@{username}</p>
         </div>
 
-        <div className="user-actions">
+        <div className="flex-shrink-0">
           <button 
-            className="follow-btn"
+            className="bg-green-400/10 border border-green-400 text-green-400 px-4 py-2 rounded text-sm hover:bg-green-400/20 hover:shadow-green-400/30 transition-all duration-200"
             onClick={() => onFollowUser?.(fid)}
             aria-label={`Follow ${displayName}`}
           >
@@ -72,19 +72,21 @@ function OneWayInCard({
       </div>
 
       {bio && (
-        <div className="user-bio">
-          <p>{bio.length > 100 ? `${bio.substring(0, 100)}...` : bio}</p>
+        <div className="mb-3 p-2 bg-green-400/5 rounded border-l-2 border-green-600">
+          <p className="text-green-300 text-sm leading-relaxed">
+            {bio.length > 100 ? `${bio.substring(0, 100)}...` : bio}
+          </p>
         </div>
       )}
 
-      <div className="user-stats">
-        <div className="stat">
-          <span className="stat-value">{followerCount.toLocaleString()}</span>
-          <span className="stat-label">followers</span>
+      <div className="flex gap-6">
+        <div className="flex flex-col">
+          <span className="text-green-600 text-xs mb-1">Followers:</span>
+          <span className="text-green-400 font-bold text-sm">{followerCount.toLocaleString()}</span>
         </div>
-        <div className="stat">
-          <span className="stat-value">{followingCount.toLocaleString()}</span>
-          <span className="stat-label">following</span>
+        <div className="flex flex-col">
+          <span className="text-green-600 text-xs mb-1">Following:</span>
+          <span className="text-green-400 font-bold text-sm">{followingCount.toLocaleString()}</span>
         </div>
       </div>
     </div>
@@ -186,82 +188,110 @@ export default function OneWayInPage() {
   }
 
   return (
-    <div className="one-way-page">
-      <div className="container">
+    <div className="min-h-screen bg-black text-green-400 font-mono p-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <header className="header">
-          <h1 className="title">← People Who Follow You (But You Don't Follow Back)</h1>
-          <p className="subtitle">
-            Discover potential connections who already follow you
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2 tracking-wider">
+            ← People Who Follow You
+          </h1>
+          <p className="text-green-300 text-lg">
+            But you don't follow back
           </p>
-          <p className="api-note">
+          <p className="text-green-600 text-sm mt-2 italic">
             📊 Fetches ALL followers and following for complete analysis
           </p>
-        </header>
+          <div className="border-t border-green-600 mt-4 w-32 mx-auto"></div>
+        </div>
 
         {/* Input Form */}
-        <form onSubmit={handleSubmit} className="input-form">
-          <div className="input-group">
-            <label htmlFor="fid" className="input-label">
+        <form onSubmit={handleSubmit} className="mb-6">
+          <div className="flex justify-center items-center gap-4">
+            <label htmlFor="fid" className="text-green-300">
               Enter Farcaster FID:
             </label>
-            <div className="input-row">
-              <input
-                id="fid"
-                type="number"
-                value={userFid}
-                onChange={(e) => setUserFid(e.target.value)}
-                placeholder="e.g. 3621"
-                className="fid-input"
-                disabled={loading}
-                min="1"
-                required
-              />
-              <button 
-                type="submit" 
-                disabled={loading || !userFid.trim()}
-                className="analyze-btn"
-              >
-                {loading ? 'Analyzing...' : 'Analyze'}
-              </button>
-            </div>
+            <input
+              id="fid"
+              type="number"
+              value={userFid}
+              onChange={(e) => setUserFid(e.target.value)}
+              placeholder="e.g. 3621"
+              className="bg-black border border-green-600 text-green-400 px-3 py-2 rounded-md w-32 focus:outline-none focus:border-green-400"
+              disabled={loading}
+              min="1"
+              required
+            />
+            <button 
+              type="submit" 
+              disabled={loading || !userFid.trim()}
+              className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-4 py-2 rounded-md border border-green-600 transition-colors"
+            >
+              {loading ? 'Analyzing...' : 'Analyze'}
+            </button>
           </div>
         </form>
 
         {/* Analysis Stats */}
         {analysisStats && (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value">{analysisStats.totalFollowing.toLocaleString()}</div>
-              <div className="stat-label">You Follow</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{analysisStats.totalFollowers.toLocaleString()}</div>
-              <div className="stat-label">Follow You</div>
-            </div>
-            <div className="stat-card highlighted">
-              <div className="stat-value">{analysisStats.oneWayInCount.toLocaleString()}</div>
-              <div className="stat-label">One-Way In</div>
+          <div className="mb-6 p-4 bg-gray-900 border border-green-600 rounded-lg">
+            <h3 className="text-green-400 font-bold mb-2">📊 Analysis Results</h3>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="text-green-600">You Follow:</span>
+                <div className="text-green-400 font-bold">{analysisStats.totalFollowing.toLocaleString()}</div>
+              </div>
+              <div>
+                <span className="text-green-600">Follow You:</span>
+                <div className="text-green-400 font-bold">{analysisStats.totalFollowers.toLocaleString()}</div>
+              </div>
+              <div>
+                <span className="text-blue-400">One-Way In:</span>
+                <div className="text-blue-400 font-bold">{analysisStats.oneWayInCount.toLocaleString()}</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Results Section */}
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mb-4"></div>
+            <div className="text-green-400 text-lg">
+              🔍 Analyzing one-way relationships...
+            </div>
+            <div className="text-green-600 text-sm mt-2">
+              Finding accounts who follow you but you don't follow back
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
         {error && (
-          <div className="error-message">
-            <div className="error-icon">⚠️</div>
-            <p>{error}</p>
+          <div className="text-center py-8">
+            <div className="text-red-400 text-lg mb-2">⚠️ Error</div>
+            <div className="text-red-300">{error}</div>
+            <button
+              onClick={() => analyzeOneWayIn(userFid)}
+              className="mt-4 bg-red-900 hover:bg-red-800 text-red-400 px-4 py-2 rounded-md border border-red-600 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         )}
 
-        {oneWayIn.length > 0 && (
-          <div className="results-section">
-            <div className="results-header">
-              <h2>🌟 {oneWayIn.length} accounts who follow you but you don't follow back</h2>
-              <p className="results-subtitle">Great opportunities to grow your network with interested followers</p>
+        {/* Results */}
+        {!loading && !error && oneWayIn.length > 0 && (
+          <>
+            <div className="mb-4 text-center">
+              <h2 className="text-2xl font-bold text-green-400 mb-2">
+                🌟 {oneWayIn.length} accounts who follow you but you don't follow back
+              </h2>
+              <p className="text-green-600">
+                Great opportunities to grow your network with interested followers
+              </p>
             </div>
             
-            <div className="user-list">
+            <div className="space-y-0">
               {oneWayIn.map((user) => (
                 <OneWayInCard
                   key={user.fid}
@@ -270,435 +300,21 @@ export default function OneWayInPage() {
                 />
               ))}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="loading-overlay">
-            <div className="loading-content">
-              <div className="spinner"></div>
-              <p>Analyzing one-way relationships...</p>
-              <p className="loading-detail">Finding accounts who follow you but you don't follow back</p>
+        {/* No Results */}
+        {!loading && !error && oneWayIn.length === 0 && analysisStats && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-2">
+              No one-way followers found
+            </div>
+            <div className="text-gray-500 text-sm">
+              All your followers are accounts you already follow back!
             </div>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .one-way-page {
-          min-height: 100vh;
-          background: #000000;
-          color: #00ff00;
-          font-family: 'Monaco', 'Menlo', monospace;
-          padding: 20px;
-        }
-
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .header {
-          text-align: center;
-          margin-bottom: 32px;
-          padding-bottom: 20px;
-          border-bottom: 1px solid #00aa00;
-        }
-
-        .title {
-          font-size: 24px;
-          margin: 0 0 8px 0;
-          color: #00ff00;
-          text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .subtitle {
-          font-size: 14px;
-          color: #00cc00;
-          margin: 0;
-          line-height: 1.4;
-        }
-
-        .api-note {
-          font-size: 12px;
-          color: #00aa00;
-          margin: 8px 0 0 0;
-          font-style: italic;
-        }
-
-        .input-form {
-          margin-bottom: 32px;
-        }
-
-        .input-group {
-          max-width: 500px;
-          margin: 0 auto;
-        }
-
-        .input-label {
-          display: block;
-          color: #00ff00;
-          font-size: 14px;
-          margin-bottom: 8px;
-          font-weight: bold;
-        }
-
-        .input-row {
-          display: flex;
-          gap: 12px;
-        }
-
-        .fid-input {
-          flex: 1;
-          background: rgba(0, 255, 0, 0.05);
-          border: 1px solid #00aa00;
-          border-radius: 4px;
-          padding: 12px 16px;
-          color: #00ff00;
-          font-family: inherit;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        }
-
-        .fid-input:focus {
-          outline: none;
-          border-color: #00ff00;
-          background: rgba(0, 255, 0, 0.1);
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-        }
-
-        .fid-input:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .fid-input::placeholder {
-          color: #00aa00;
-        }
-
-        .analyze-btn {
-          background: rgba(0, 255, 0, 0.1);
-          border: 1px solid #00ff00;
-          color: #00ff00;
-          padding: 12px 24px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-family: inherit;
-          font-size: 14px;
-          font-weight: bold;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-        }
-
-        .analyze-btn:hover:not(:disabled) {
-          background: rgba(0, 255, 0, 0.2);
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-          transform: translateY(-1px);
-        }
-
-        .analyze-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-          gap: 16px;
-          margin-bottom: 32px;
-          max-width: 500px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .stat-card {
-          background: rgba(0, 255, 0, 0.03);
-          border: 1px solid #00aa00;
-          border-radius: 6px;
-          padding: 16px;
-          text-align: center;
-          transition: all 0.2s ease;
-        }
-
-        .stat-card.highlighted {
-          background: rgba(0, 150, 255, 0.05);
-          border-color: #0096ff;
-        }
-
-        .stat-card:hover {
-          background: rgba(0, 255, 0, 0.06);
-          box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
-        }
-
-        .stat-card.highlighted:hover {
-          background: rgba(0, 150, 255, 0.08);
-          box-shadow: 0 0 8px rgba(0, 150, 255, 0.3);
-        }
-
-        .stat-value {
-          font-size: 20px;
-          font-weight: bold;
-          color: #00ff00;
-          margin-bottom: 4px;
-        }
-
-        .stat-card.highlighted .stat-value {
-          color: #0096ff;
-        }
-
-        .stat-label {
-          font-size: 12px;
-          color: #00aa00;
-        }
-
-        .error-message {
-          text-align: center;
-          padding: 20px;
-          border: 1px solid #ff4444;
-          border-radius: 8px;
-          background: rgba(255, 68, 68, 0.05);
-          margin-bottom: 24px;
-        }
-
-        .error-icon {
-          font-size: 32px;
-          margin-bottom: 8px;
-        }
-
-        .error-message p {
-          color: #ff4444;
-          margin: 0;
-          font-size: 14px;
-        }
-
-        .results-section {
-          margin-top: 32px;
-        }
-
-        .results-header {
-          text-align: center;
-          margin-bottom: 24px;
-        }
-
-        .results-header h2 {
-          color: #00ff00;
-          font-size: 18px;
-          margin: 0 0 8px 0;
-        }
-
-        .results-subtitle {
-          color: #00aa00;
-          font-size: 12px;
-          margin: 0;
-        }
-
-        .user-list {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
-        }
-
-        .user-card {
-          background: rgba(0, 255, 0, 0.05);
-          border: 1px solid #00ff00;
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 16px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-          transition: all 0.2s ease;
-        }
-
-        .user-card:hover {
-          background: rgba(0, 255, 0, 0.1);
-          box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-          transform: translateY(-2px);
-        }
-
-        .user-header {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-
-        .user-avatar {
-          flex-shrink: 0;
-        }
-
-        .avatar-img {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          border: 1px solid #00ff00;
-        }
-
-        .avatar-placeholder {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          border: 1px solid #00ff00;
-          background: rgba(0, 255, 0, 0.1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #00ff00;
-          font-weight: bold;
-          font-size: 18px;
-        }
-
-        .user-info {
-          flex: 1;
-        }
-
-        .user-name {
-          color: #00ff00;
-          margin: 0 0 4px 0;
-          font-size: 16px;
-          font-weight: bold;
-        }
-
-        .user-username {
-          color: #00cc00;
-          margin: 0 0 4px 0;
-          font-size: 14px;
-        }
-
-        .user-actions {
-          flex-shrink: 0;
-        }
-
-        .follow-btn {
-          background: rgba(0, 255, 0, 0.1);
-          border: 1px solid #00ff00;
-          color: #00ff00;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-family: inherit;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        }
-
-        .follow-btn:hover {
-          background: rgba(0, 255, 0, 0.2);
-          box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-        }
-
-        .user-bio {
-          margin-bottom: 12px;
-          padding: 8px;
-          background: rgba(0, 255, 0, 0.02);
-          border-radius: 4px;
-          border-left: 3px solid #00aa00;
-        }
-
-        .user-bio p {
-          color: #00cc00;
-          font-size: 14px;
-          margin: 0;
-          line-height: 1.4;
-        }
-
-        .user-stats {
-          display: flex;
-          gap: 24px;
-        }
-
-        .stat {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .stat-label {
-          color: #00aa00;
-          font-size: 12px;
-          margin-bottom: 2px;
-        }
-
-        .stat-value {
-          color: #00ff00;
-          font-weight: bold;
-          font-size: 14px;
-        }
-
-        .loading-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .loading-content {
-          text-align: center;
-          background: rgba(0, 255, 0, 0.05);
-          border: 1px solid #00aa00;
-          border-radius: 8px;
-          padding: 32px;
-        }
-
-        .spinner {
-          width: 40px;
-          height: 40px;
-          border: 2px solid #00aa00;
-          border-top: 2px solid #00ff00;
-          border-radius: 50%;
-          margin: 0 auto 16px auto;
-          animation: spin 1s linear infinite;
-        }
-
-        .loading-content p {
-          color: #00ff00;
-          margin: 8px 0;
-          font-size: 14px;
-        }
-
-        .loading-detail {
-          color: #00cc00 !important;
-          font-size: 12px !important;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-          .one-way-page {
-            padding: 16px;
-          }
-
-          .title {
-            font-size: 20px;
-          }
-
-          .input-row {
-            flex-direction: column;
-          }
-
-          .stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 12px;
-          }
-
-          .stat-card {
-            padding: 12px;
-          }
-
-          .stat-value {
-            font-size: 16px;
-          }
-        }
-      `}</style>
     </div>
   )
 } 
