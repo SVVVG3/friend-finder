@@ -28,7 +28,15 @@ export async function GET(request: NextRequest) {
     const batchSize = 100 // Reverting to 100 - 150 caused 400 errors
     let cursor: string | undefined
     let page = 1
-    let allFollowers: any[] = []
+    const allFollowers: Array<{
+      fid: number
+      username: string
+      displayName: string
+      followerCount: number
+      followingCount: number
+      pfpUrl?: string
+      bio?: string
+    }> = []
 
     do {
       try {

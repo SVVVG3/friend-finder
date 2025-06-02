@@ -182,8 +182,7 @@ export function LoadingButton({
   children: React.ReactNode
   className?: string
   disabled?: boolean
-  [key: string]: any
-}) {
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       className={`

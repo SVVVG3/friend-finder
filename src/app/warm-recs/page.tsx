@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import WarmRecsList from '../../../components/WarmRecsList'
 import { UserWithMutuals } from '../../../utils/sort'
 import { 
@@ -8,7 +9,8 @@ import {
   NetworkAnalysisLoader, 
   CRTErrorState, 
   LoadingButton,
-  CRTEmptyState 
+  CRTEmptyState,
+  CRTCardSkeleton
 } from '../../../components/LoadingStates'
 import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
 
@@ -18,7 +20,16 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<number>(466111) // Your FID
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
-  const [analysisStats, setAnalysisStats] = useState<any>(null)
+  const [analysisStats, setAnalysisStats] = useState<{
+    totalRecommendations: number
+    processingTime: number
+    processingTimeMs: number
+    analyzedAccounts?: number
+    totalFollowing?: number
+    totalCandidates?: number
+    deepAnalysis?: boolean
+    minMutuals?: number
+  } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
 

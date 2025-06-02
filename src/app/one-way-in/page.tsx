@@ -3,15 +3,13 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { 
-  CRTSpinner, 
   NetworkAnalysisLoader, 
   CRTErrorState, 
   LoadingButton,
   CRTEmptyState,
-  CRTCardSkeleton,
-  APIProgressTracker
+  CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
+import { notifyFrameReady } from '../../../lib/farcaster-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -128,7 +126,7 @@ export default function OneWayInPage() {
     followers: FarcasterUser[]
   ) => {
     const followingFids = new Set(following.map(u => u.fid))
-    // One-way in: People who follow you but you don't follow back
+    // One-way in: People who follow you but you don&apos;t follow back
     const oneWayInUsers = followers.filter(user => !followingFids.has(user.fid))
     
     // Sort by follower count (highest first) to show most influential accounts at top
@@ -238,6 +236,11 @@ export default function OneWayInPage() {
     initializePage()
   }, [userFid])
 
+  useEffect(() => {
+    // Notify Farcaster frame is ready
+    notifyFrameReady()
+  }, [analyzeOneWayIn, loading])
+
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
       <div className="max-w-4xl mx-auto w-full">
@@ -250,7 +253,7 @@ export default function OneWayInPage() {
             ← People Who Follow You
           </h2>
           <p className="text-green-300 text-base sm:text-lg">
-            But you don't follow back
+            But you don&apos;t follow back
           </p>
           <p className="text-green-600 text-xs sm:text-sm mt-2 italic px-2">
             📊 Fetches ALL followers and following for complete analysis
@@ -341,7 +344,7 @@ export default function OneWayInPage() {
           <>
             <div className="mb-4 text-center px-2">
               <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-2 crt-text-glow">
-                🌟 {oneWayIn.length} accounts who follow you but you don't follow back
+                🌟 {oneWayIn.length} accounts who follow you but you don&apos;t follow back
               </h2>
               <p className="text-green-600 text-sm sm:text-base leading-relaxed">
                 Great opportunities to grow your network with interested followers
@@ -368,7 +371,7 @@ export default function OneWayInPage() {
           <CRTEmptyState
             icon="✨"
             title="No One-Way Followers Found"
-            message="All your followers are accounts you already follow back! Your network is perfectly mutual."
+            message="No potential follows found. You&apos;re following everyone back!"
             className="mb-6"
           />
         )}

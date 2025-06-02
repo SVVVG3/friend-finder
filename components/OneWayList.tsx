@@ -57,7 +57,7 @@ function OneWayCard({
               width={40}
               height={40}
               className="avatar-img"
-              onError={(e) => {
+              onError={() => {
                 console.warn(`Failed to load image for ${displayName}: ${pfpUrl}`)
                 setImageError(true)
               }}
@@ -424,7 +424,7 @@ export default function OneWayList({
               ↗️ One-Way Out ({oneWayOut.length})
             </h3>
             <p className="column-subtitle">
-              People you follow who don't follow you back
+              People you follow who don&apos;t follow you back
             </p>
           </div>
 
@@ -456,7 +456,7 @@ export default function OneWayList({
               ↙️ One-Way In ({oneWayIn.length})
             </h3>
             <p className="column-subtitle">
-              People who follow you but you don't follow back
+              People who follow you but you don&apos;t follow back
             </p>
           </div>
 

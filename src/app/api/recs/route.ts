@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFollowing, getFollowers } from '../../../../lib/farcaster'
+import { getFollowing } from '../../../../lib/farcaster'
 import { profileCache } from '../../../../utils/profileCache'
 import { 
   sortWarmRecommendations, 
@@ -67,7 +67,15 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Get COMPLETE user's following list for accurate exclusion filter
     console.log('📋 Fetching COMPLETE user following list for exclusion filter...')
-    let allFollowing: any[] = []
+    const allFollowing: Array<{
+      fid: number
+      username: string
+      displayName: string
+      followerCount: number
+      followingCount: number
+      pfpUrl?: string
+      bio?: string
+    }> = []
     let cursor: string | undefined = undefined
     let pageCount = 0
     const maxPagesForExclusion = 50 // Always load complete list for exclusion (up to 2500)
@@ -105,7 +113,15 @@ export async function GET(request: NextRequest) {
 
     // Step 2: SMART account selection based on follower quality
     // Focus on accounts with meaningful follower counts for better mutual discovery
-    let analysisSelection: any[]
+    let analysisSelection: Array<{
+      fid: number
+      username: string
+      displayName: string
+      followerCount: number
+      followingCount: number
+      pfpUrl?: string
+      bio?: string
+    }>
     
     if (!deepParam) {
       // Standard: Analyze accounts with 500+ followers (faster, broader reach)
@@ -160,7 +176,15 @@ export async function GET(request: NextRequest) {
         // CRITICAL FIX: Trust-based discovery (getFollowing not getFollowers)
         const following = await getFollowing(followedUser.fid, followingLimit)
         
-        for (const potentialRec of following.data) {
+        for (const potentialRec of following.data as Array<{
+          fid: number
+          username: string
+          displayName: string
+          followerCount: number
+          followingCount: number
+          pfpUrl?: string
+          bio?: string
+        }>) {
           if (!potentialRec.fid || potentialRec.fid === 0) continue
           if (potentialRec.fid === userFid || userFollowingSet.has(potentialRec.fid)) continue
 
