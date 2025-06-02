@@ -9,7 +9,7 @@ import {
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { notifyFrameReady } from '../../../lib/farcaster-sdk'
+import { sdk } from '@farcaster/frame-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -227,9 +227,13 @@ export default function OneWayInPage() {
   // Notify Farcaster frame is ready immediately when component mounts
   useEffect(() => {
     const initializeFrame = async () => {
-      // Call ready as soon as the interface is loaded, not waiting for data
-      await notifyFrameReady()
-      console.log('🚀 Frame ready called immediately on mount')
+      try {
+        // Call ready as soon as the interface is loaded, not waiting for data
+        await sdk.actions.ready()
+        console.log('🚀 Frame ready called immediately on mount')
+      } catch (error) {
+        console.error('❌ Failed to call frame ready:', error)
+      }
     }
     
     initializeFrame()

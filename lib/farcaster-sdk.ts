@@ -1,4 +1,4 @@
-import frameSDK from '@farcaster/frame-sdk';
+import { sdk } from '@farcaster/frame-sdk';
 
 export const notifyFrameReady = async (): Promise<void> => {
   try {
@@ -7,13 +7,13 @@ export const notifyFrameReady = async (): Promise<void> => {
       return;
     }
 
-    if (!frameSDK) {
+    if (!sdk) {
       console.log('⚠️ Frame SDK not available - likely not running in Farcaster');
       return;
     }
 
     // Notify Farcaster that the frame is ready
-    await frameSDK.actions.ready();
+    await sdk.actions.ready();
     console.log('🚀 Notified Farcaster that frame is ready');
   } catch (error) {
     console.error('❌ Failed to notify frame ready:', error);
@@ -21,17 +21,23 @@ export const notifyFrameReady = async (): Promise<void> => {
 };
 
 export const getFrameSDK = () => {
-  return frameSDK;
+  return sdk;
 };
 
 // Helper to check if we're running inside Farcaster
-export const isInFarcaster = (): boolean => {
+export const isInFarcaster = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false;
   
-  // Check if we're in a Farcaster context
-  return Boolean(
-    window.frameElement || 
-    window.top !== window.self ||
-    navigator.userAgent.includes('Farcaster')
-  );
+  try {
+    // Use the official SDK method to detect Mini App environment
+    return await sdk.isInMiniApp();
+  } catch (error) {
+    console.error('Failed to check if in Mini App:', error);
+    // Fallback to basic checks
+    return Boolean(
+      window.frameElement || 
+      window.top !== window.self ||
+      navigator.userAgent.includes('Farcaster')
+    );
+  }
 }; 

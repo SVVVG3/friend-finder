@@ -50,7 +50,7 @@ export const metadata: Metadata = {
         action: {
           type: "launch_frame",
           name: "Friend Finder",
-          url: "https://friend-finder-liard.vercel.app",
+          url: "https://farcaster-friend-finder.vercel.app",
           splashImageUrl: "/FriendFinderSplashImage.png",
           splashBackgroundColor: "#000000"
         }
@@ -85,7 +85,7 @@ export default function RootLayout({
             action: {
               type: "launch_frame", 
               name: "Friend Finder",
-              url: "https://friend-finder-liard.vercel.app",
+              url: "https://farcaster-friend-finder.vercel.app",
               splashImageUrl: "/FriendFinderSplashImage.png",
               splashBackgroundColor: "#000000"
             }
