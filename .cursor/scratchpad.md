@@ -45,7 +45,7 @@ Following the 19 tasks outlined in tasks.md:
 - [x] Task 2: Install dependencies ✅ **COMPLETED** - All required packages installed and verified
 - [x] Task 3: Add miniapp config files ✅ **COMPLETED** - miniapp.config.json and vercel.json created and tested
 - [x] Task 4: Set up Supabase + .env ✅ **COMPLETED** - Database connection configured and verified
-- [ ] Task 5: Create Neynar API wrapper
+- [x] Task 5: Create Neynar API wrapper ✅ **COMPLETED** - Farcaster API client configured and verified
 - [ ] Task 6: Add Farcaster helpers
 - [ ] Task 7: Add profile cache utility
 - [ ] Task 8: Build sorting utilities
@@ -63,23 +63,23 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Current Status / Progress Tracking
 
-**Current Task**: Task 4 - Set up Supabase + .env ✅ **COMPLETED**
-**Status**: Task 4 completed successfully. Supabase database connection configured and verified working.
+**Current Task**: Task 5 - Create Neynar API wrapper ✅ **COMPLETED**
+**Status**: Task 5 completed successfully. Neynar API client configured and verified working with Farcaster API.
 
 **Success Criteria Met**: 
-- ✅ Created .env.local with Supabase credentials (URL, anon key, service role key)
-- ✅ Created lib/supabase.ts with client configuration
-- ✅ Verified connection works via API test endpoint
-- ✅ Environment variables properly loaded in build process
-- ✅ Both client and admin clients configured correctly
+- ✅ Added NEYNAR_API_KEY to .env.local
+- ✅ Created lib/neynar.ts with initialized NeynarAPIClient
+- ✅ Verified connection via API test endpoint
+- ✅ Successfully called fetchUserFollowing() with test FID
+- ✅ API returned expected data structure (users, next cursor)
 
-**Next Task**: Task 5 - Create Neynar API wrapper
+**Next Task**: Task 6 - Add Farcaster helpers
 
 ## Executor's Feedback or Assistance Requests
 
-**Task 4 Complete**: Successfully configured Supabase database connection. Environment variables are secure, client is properly initialized, and connection verified through runtime testing. Ready to proceed to Task 5 (Create Neynar API wrapper).
+**Task 5 Complete**: Successfully configured Neynar API wrapper. The Farcaster API client is properly initialized and can successfully call core methods like fetchUserFollowing(). Environment variables are secure and API connection verified through runtime testing. Ready to proceed to Task 6 (Add Farcaster helpers).
 
-Waiting for user confirmation to test and commit before moving to Task 5.
+Waiting for user confirmation to test and commit before moving to Task 6.
 
 ## Lessons
 
