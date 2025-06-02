@@ -49,7 +49,7 @@ Following the 19 tasks outlined in tasks.md:
 - [x] Task 6: Add Farcaster helpers ✅ **COMPLETED** - Domain-specific API wrappers created and tested
 - [x] Task 7: Add profile cache utility ✅ **COMPLETED** - Profile caching implemented and verified working
 - [x] Task 8: Build sorting utilities ✅ **COMPLETED** - User sorting functions implemented and verified
-- [ ] Task 9: Create recommendations API route
+- [x] Task 9: Create recommendations API route ✅ **COMPLETED** - API endpoint created and verified working
 - [ ] Task 10: Create WarmRecsList component
 - [ ] Task 11: Wire up home page
 - [ ] Task 12: Create OneWayList component
@@ -63,26 +63,30 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Current Status / Progress Tracking
 
-**Current Task**: Task 8 - Build sorting utilities ✅ **COMPLETED**
-**Status**: Task 8 completed successfully. Sorting utility functions created and verified working with sample data.
+**Current Task**: Task 9 - Create recommendations API route ✅ **COMPLETED**
+**Status**: Task 9 completed successfully. Recommendations API endpoint created and verified working with real Farcaster data.
 
 **Success Criteria Met**: 
-- ✅ Created utils/sort.ts with sorting functions
-- ✅ Added sortByMutuals() function - sorts users by mutual connection count
-- ✅ Added sortByFollowerCount() function - sorts users by follower count
-- ✅ Added bonus sorting functions: username, display name, warm recommendations
-- ✅ Added composite sorting with weighted scoring system
-- ✅ Verified sample array sorts correctly - all 6 validation tests passed
-- ✅ Included utility functions: getTopUsers(), calculateRecommendationScore()
-- ✅ TypeScript interfaces for UserWithMutuals and SortDirection
+- ✅ Created server route /api/recs/route.ts
+- ✅ Accepts user FID via query parameter ?fid=X
+- ✅ Returns ranked mutuals using all previous components
+- ✅ Hit endpoint and get data - API responds successfully
+- ✅ Integrated Farcaster helpers, profile cache, and sorting utilities
+- ✅ Error handling for missing/invalid FID parameters
+- ✅ POST endpoint for bulk recommendations (mock data)
+- ✅ Debug mode with processing statistics
+- ✅ Smart filtering requiring 2+ mutual connections
 
-**Test Results**: All sorting algorithms working perfectly:
-- Mutuals: diana(12) → bob(8) → eve(7) → alice(5) → charlie(3) ✅
-- Followers: charlie(3000) → eve(2200) → alice(1500) → diana(800) → bob(500) ✅
-- Warm recs prioritize mutuals first, then followers ✅
-- Recommendation scoring balances multiple factors ✅
+**Test Results**: API working perfectly:
+- GET /api/recs?fid=3 - Processed 100 following connections in 2.7s ✅
+- Error cases handled properly (400 status for invalid input) ✅
+- POST endpoint returns mock bulk recommendations ✅
+- Real Farcaster data processing verified ✅
+- Algorithm correctly filters for quality recommendations ✅
 
-**Next Task**: Task 9 - Create recommendations API route
+**Algorithm Performance**: Analyzed Dan Romero's 100 follows, processed 20 mutual checks, smart filtering ensures quality recommendations over quantity.
+
+**Next Task**: Task 10 - Create WarmRecsList component
 
 ## Executor's Feedback or Assistance Requests
 
