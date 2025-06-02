@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       'res.cloudinary.com',
       'imagedelivery.net',
       'gateway.pinata.cloud',
+      'tba-mobile.mypinata.cloud',
       'i.seadn.io',
       'openseauserdata.com',
       'arweave.net',
@@ -46,6 +47,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'gateway.pinata.cloud',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'tba-mobile.mypinata.cloud',
         port: '',
         pathname: '/**',
       },

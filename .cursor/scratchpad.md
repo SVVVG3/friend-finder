@@ -111,6 +111,13 @@ Current recommendation algorithm is working correctly but returns 0 results due 
 - Read the file before you try to edit it
 - If there are vulnerabilities that appear in the terminal, run npm audit before proceeding
 - Always ask before using the -force git command
+- **Image Domain Issues**: Multiple domains require explicit configuration in next.config.ts:
+  - warpcast.com ✅ Fixed
+  - takocdn.xyz ✅ Fixed  
+  - ipfs.decentralized-content.com ✅ Fixed
+  - tba-mobile.mypinata.cloud ✅ Fixed
+  - Use both `domains` array and `remotePatterns` for comprehensive coverage
+  - Wildcard patterns like `**.pinata.cloud` help but specific domains sometimes still needed
 
 ## Git Commit
 
