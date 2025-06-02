@@ -20,6 +20,7 @@ function RecommendationCard({
   onFollowUser?: (fid: number) => void
 }) {
   const [imageError, setImageError] = React.useState(false)
+  const [imageRetried, setImageRetried] = React.useState(false)
   
   const { 
     fid, 
@@ -32,6 +33,14 @@ function RecommendationCard({
     pfpUrl,
     bio 
   } = recommendation
+
+  // Helper to check if URL is problematic IPFS
+  const isProblematicImage = (url: string) => {
+    return url.includes('ipfs.decentralized-content.com') || 
+           url.includes('nft.orivium.io') ||
+           url.includes('.ipfs.') ||
+           url.includes('arweave.net')
+  }
 
   return (
     <div className="rec-card">
@@ -46,9 +55,19 @@ function RecommendationCard({
               className="avatar-img"
               onError={(e) => {
                 console.warn(`Failed to load image for ${displayName}: ${pfpUrl}`)
-                setImageError(true)
+                
+                // For problematic domains, don't retry - go straight to fallback
+                if (isProblematicImage(pfpUrl) || imageRetried) {
+                  setImageError(true)
+                } else {
+                  // For other domains, try once more with unoptimized
+                  setImageRetried(true)
+                  // Force re-render by updating src
+                  setTimeout(() => setImageError(true), 1000)
+                }
               }}
-              unoptimized={imageError} // Fallback for problematic domains
+              unoptimized={isProblematicImage(pfpUrl) || imageRetried} // Skip optimization for problematic domains
+              priority={false}
             />
           ) : (
             <div className="avatar-placeholder">

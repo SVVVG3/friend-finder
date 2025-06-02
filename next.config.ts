@@ -134,7 +134,35 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // IPFS gateways - multiple patterns for better coverage
+      {
+        protocol: 'https',
+        hostname: '**.ipfs.**',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gateway.ipfs.io',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cloudflare-ipfs.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.decentralized-content.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
+    // Add fallback handling for problematic images
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 
