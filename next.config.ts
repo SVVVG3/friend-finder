@@ -18,7 +18,8 @@ const nextConfig: NextConfig = {
       'nft.orivium.io',
       'takocdn.xyz',
       'warpcast.com',
-      'i.postimg.cc'
+      'i.postimg.cc',
+      'img.uno.fun'
     ],
     remotePatterns: [
       {

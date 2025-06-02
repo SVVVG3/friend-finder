@@ -145,8 +145,10 @@ Current recommendation algorithm is working correctly but returns 0 results due 
   - ipfs.decentralized-content.com ✅ Fixed
   - tba-mobile.mypinata.cloud ✅ Fixed
   - i.postimg.cc ✅ Fixed
-  - Use both `domains` array and `remotePatterns` for comprehensive coverage
-  - Wildcard patterns like `**.pinata.cloud` help but specific domains sometimes still needed
+  - img.uno.fun ✅ Fixed
+  - **PERMANENT SOLUTION**: Added `unoptimized={true}` to all Image components to bypass domain restrictions entirely
+  - This prevents ALL future image domain errors by skipping Next.js optimization
+  - Trade-off: No image optimization, but eliminates recurring domain configuration issues
 
 ## Git Commit
 

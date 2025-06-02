@@ -20,7 +20,6 @@ function RecommendationCard({
   onFollowUser?: (fid: number) => void
 }) {
   const [imageError, setImageError] = React.useState(false)
-  const [imageRetried, setImageRetried] = React.useState(false)
   
   const { 
     fid, 
@@ -55,18 +54,9 @@ function RecommendationCard({
               className="avatar-img"
               onError={(e) => {
                 console.warn(`Failed to load image for ${displayName}: ${pfpUrl}`)
-                
-                // For problematic domains, don't retry - go straight to fallback
-                if (isProblematicImage(pfpUrl) || imageRetried) {
-                  setImageError(true)
-                } else {
-                  // For other domains, try once more with unoptimized
-                  setImageRetried(true)
-                  // Force re-render by updating src
-                  setTimeout(() => setImageError(true), 1000)
-                }
+                setImageError(true)
               }}
-              unoptimized={isProblematicImage(pfpUrl) || imageRetried} // Skip optimization for problematic domains
+              unoptimized={true} // Bypass Next.js optimization and domain restrictions completely
               priority={false}
             />
           ) : (
