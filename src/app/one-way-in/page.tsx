@@ -9,7 +9,6 @@ import {
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { sdk } from '@farcaster/frame-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -112,7 +111,6 @@ export default function OneWayInPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<string>('466111')
-  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -225,35 +223,14 @@ export default function OneWayInPage() {
     }
   }
 
-  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
+  // 🚀 Frame ready is now handled by home page - removed duplicate ready() call
+  // Auto-load data on mount since frame ready was called by home page
   useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
-        await sdk.actions.ready()
-        console.log('✅ Frame ready called successfully - splash screen dismissed')
-        setFrameReady(true)
-      } catch (error) {
-        console.error('❌ Failed to call frame ready:', error)
-        setFrameReady(true) // Continue anyway to avoid blocking
-      }
-    }
-    
-    initializeFrame()
-  }, []) // Run once on mount - HIGHEST PRIORITY
-
-  // 📊 LOWER PRIORITY: Load data only AFTER frame is ready
-  useEffect(() => {
-    if (!frameReady) {
-      console.log('⏳ Waiting for frame ready before loading data...')
-      return
-    }
-    
-    console.log('📊 Frame is ready, now loading data...')
+    console.log('📊 Loading data (frame ready handled by home page)...')
     if (userFid && userFid.trim() !== '') {
       analyzeOneWayIn(userFid)
     }
-  }, [frameReady, userFid, analyzeOneWayIn]) // Only run after frameReady is true
+  }, [userFid, analyzeOneWayIn]) // Load data immediately
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
