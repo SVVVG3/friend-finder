@@ -115,6 +115,18 @@ Following the 19 tasks outlined in tasks.md:
 
 **Why Mega-Accounts Provide Value**: Trust-based discovery leverages their curated following lists and expert judgment about who to follow.
 
+**🚨 CRITICAL BUG FIX: Exclusion Filter**
+- **User Report**: "i'm also seeing people i already follow on the standard analysis - this shouldn't be happening?"
+- **Root Cause**: Standard analysis only loaded first 750 following accounts for exclusion filter, but user follows 2000+
+- **Problem**: Anyone user follows beyond #750 could appear as recommendations (serious bug!)
+- **Fix**: Always load complete following list (up to 2500) for exclusion filter, regardless of analysis mode
+- **Result**: Proper exclusion of all followed accounts, analysis selection separate from exclusion filter
+
+**🛡️ BUSINESS ACCOUNT FILTER:**
+- **User Insight**: Exclude accounts following <100 people (typically business/project accounts, not real people)
+- **Implementation**: Added `filter(user => (user.followingCount || 0) >= 100)` to recommendation candidates
+- **Benefit**: Only recommend active social accounts that meaningfully engage with the platform
+
 ## Executor's Feedback or Assistance Requests
 
 **Task 11 Complete**: Successfully wired up the main home page with complete Friend Finder interface. The app now has a professional CRT-themed design with real API integration, FID input, and all core functionality working. Ready to test manually and proceed to Task 12 (OneWayList component).

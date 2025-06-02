@@ -65,12 +65,12 @@ export async function GET(request: NextRequest) {
 
     console.log(`🎯 Generating ${deepParam ? 'DEEP' : 'standard'} recommendations for FID ${userFid} (limit: ${limit})`)
 
-    // Step 1: Get FULL user's following list with pagination
-    console.log('📋 Fetching COMPLETE user following list...')
+    // Step 1: Get COMPLETE user's following list for accurate exclusion filter
+    console.log('📋 Fetching COMPLETE user following list for exclusion filter...')
     let allFollowing: any[] = []
     let cursor: string | undefined = undefined
     let pageCount = 0
-    const maxPages = deepParam ? 50 : 15 // Deep: 50 pages (2500), Standard: 15 pages (750)
+    const maxPagesForExclusion = 50 // Always load complete list for exclusion (up to 2500)
     
     do {
       try {
@@ -81,15 +81,15 @@ export async function GET(request: NextRequest) {
         
         console.log(`📄 Page ${pageCount}: +${followingPage.data.length} users (total: ${allFollowing.length})`)
         
-        if (pageCount >= maxPages) {
-          console.log(`⏹️ Reached max pages (${maxPages}), stopping pagination`)
+        if (pageCount >= maxPagesForExclusion) {
+          console.log(`⏹️ Reached max pages (${maxPagesForExclusion}), stopping pagination`)
           break
         }
       } catch (error) {
         console.warn(`⚠️ Failed to fetch page ${pageCount + 1}:`, error)
         break
       }
-    } while (cursor && pageCount < maxPages)
+    } while (cursor && pageCount < maxPagesForExclusion)
     
     if (allFollowing.length === 0) {
       return NextResponse.json({
@@ -103,9 +103,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${allFollowing.length} total users that FID ${userFid} follows`)
 
-    // Step 2: Smart account selection for optimization
+    // Step 2: Smart account selection for analysis (different limits for deep vs standard)
     // Prioritize accounts with moderate follower counts (sweet spot for mutual discovery)
-    let smartSelection = allFollowing
+    let analysisSelection = allFollowing
       .filter(user => user.followerCount >= 100) // Only filter out bots (<100 followers)
       .sort((a, b) => {
         // Prioritize accounts with 1K-20K followers (best mutual discovery ratio)
@@ -114,14 +114,15 @@ export async function GET(request: NextRequest) {
         return bScore - aScore
       })
     
-    // Apply limit only for standard analysis
+    // Apply different limits for analysis based on mode
     if (!deepParam) {
-      smartSelection = smartSelection.slice(0, 300) // Standard: 300 accounts
+      analysisSelection = analysisSelection.slice(0, 300) // Standard: 300 accounts for analysis
     }
     // Deep analysis: use ALL filtered accounts for maximum accuracy
     
-    console.log(`🧠 Smart selection: ${smartSelection.length} high-potential accounts (filtered from ${allFollowing.length})`)
+    console.log(`🧠 Analysis selection: ${analysisSelection.length} high-potential accounts (from ${allFollowing.length} total following)`)
     console.log(`🔍 ${deepParam ? 'DEEP ANALYSIS: Analyzing COMPLETE network including mega-accounts' : 'STANDARD: Analyzing subset'} for maximum ${deepParam ? 'accuracy' : 'speed'}`)
+    console.log(`🛡️ Exclusion filter: Using COMPLETE following list (${allFollowing.length} accounts) to prevent recommending existing follows`)
 
     // Step 3: For each selected account, find mutual connections with optimized batch processing
     console.log('🔍 Finding mutual connections with optimized processing...')
@@ -134,20 +135,20 @@ export async function GET(request: NextRequest) {
     
     // Process in smaller batches with dynamic delays
     const batchSize = 25 // Process 25 accounts per batch
-    for (let i = 0; i < smartSelection.length; i += batchSize) {
-      const batch = smartSelection.slice(i, i + batchSize)
+    for (let i = 0; i < analysisSelection.length; i += batchSize) {
+      const batch = analysisSelection.slice(i, i + batchSize)
       batchCount++
       
-      console.log(`📦 Processing batch ${batchCount}/${Math.ceil(smartSelection.length / batchSize)} (${batch.length} accounts)`)
+      console.log(`📦 Processing batch ${batchCount}/${Math.ceil(analysisSelection.length / batchSize)} (${batch.length} accounts)`)
       
       // Process batch sequentially but with optimized delays
       for (const followedUser of batch) {
         try {
           processedCount++
-          const progress = Math.round((processedCount / smartSelection.length) * 100)
+          const progress = Math.round((processedCount / analysisSelection.length) * 100)
           
           if (processedCount % 100 === 0 || (processedCount % 50 === 0 && processedCount <= 200)) {
-            console.log(`🔗 [${progress}%] Progress: ${processedCount}/${smartSelection.length} accounts processed`)
+            console.log(`🔗 [${progress}%] Progress: ${processedCount}/${analysisSelection.length} accounts processed`)
           }
           
           // Optimized following limits for faster processing (trust-based discovery)
@@ -205,7 +206,7 @@ export async function GET(request: NextRequest) {
       }
       
       // Small delay between batches
-      if (i + batchSize < smartSelection.length) {
+      if (i + batchSize < analysisSelection.length) {
         console.log(`⏸️ Batch ${batchCount} complete. Brief pause before next batch...`)
         await new Promise(resolve => setTimeout(resolve, 200)) // 200ms between batches
       }
@@ -219,12 +220,13 @@ export async function GET(request: NextRequest) {
     const minMutuals = deepParam ? 2 : 1
     const recommendations: UserWithMutuals[] = Array.from(mutualCandidates.values())
       .filter(user => (user.mutualCount || 0) >= minMutuals)
+      .filter(user => (user.followingCount || 0) >= 100) // Exclude business/project accounts (they follow <100 people)
       .map(user => ({
         ...user,
         score: calculateRecommendationScore(user)
       }))
 
-    console.log(`📊 ${recommendations.length} candidates meet ${minMutuals}+ mutual requirement`)
+    console.log(`📊 ${recommendations.length} candidates meet ${minMutuals}+ mutual requirement and 100+ following (real social accounts)`)
 
     // Report on high-mutual discoveries with optimized thresholds
     const mediumMutualCount = recommendations.filter(r => (r.mutualCount || 0) >= 15).length
