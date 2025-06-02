@@ -41,7 +41,7 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Project Status Board
 
-### ✅ Completed Tasks (11/19 - 58% Complete)
+### ✅ Completed Tasks (12/19 - 63% Complete)
 - [x] Task 1: Initialize Next.js app ✅ **COMPLETED** - Clean starter with TypeScript
 - [x] Task 2: Install dependencies ✅ **COMPLETED** - All packages installed and verified
 - [x] Task 3: Add miniapp.config.json and vercel.json ✅ **COMPLETED** - Mini app metadata configured
@@ -52,9 +52,9 @@ Following the 19 tasks outlined in tasks.md:
 - [x] Task 8: Build utils/sort.ts ✅ **COMPLETED** - Comprehensive sorting utilities 
 - [x] Task 9: Create recommendations API route ✅ **COMPLETED** - API endpoint created and verified working
 - [x] Task 10: Create WarmRecsList component ✅ **COMPLETED** - React component with CRT theme and all features working
-- [x] Task 11: Wire up home page ✅ **COMPLETED & COMMITTED** - Major algorithm breakthrough with full network analysis
-- [ ] Task 12: Create OneWayList component ⭐ **READY TO START**
-- [ ] Task 13: Build one-way analysis page
+- [x] Task 11: Wire up home page ✅ **COMPLETED & COMMITTED** - Excellent quality algorithm, performance optimization TODO
+- [x] Task 12: Create OneWayList component ✅ **COMPLETED & COMMITTED** - Two-column layout with CRT theme, follow/unfollow actions
+- [ ] Task 13: Build one-way analysis page 🔄 **IN PROGRESS** - Page to display asymmetric relationships
 - [ ] Task 14: Create Nav component
 - [ ] Task 15: Set up layout
 - [ ] Task 16: Create globals.css CRT theme
@@ -194,11 +194,71 @@ Following the 19 tasks outlined in tasks.md:
 
 **KEY INSIGHT**: The user was right - we overcorrected and sacrificed the core value proposition. Better to have a slower but useful app than a fast but useless one.
 
+**🎯 CRITICAL ACCOUNT SELECTION BREAKTHROUGH - USER INSIGHT:**
+- **User's Key Insight**: "maybe the problem is in which accounts we are analyze. we should be pulling all following for the user and analyzing all of them that have more than 1000 followers"
+- **Problem**: We were using arbitrary caps (500 accounts) instead of focusing on account quality
+- **Solution**: Analyze ALL accounts with meaningful follower counts
+
+**NEW SMART ACCOUNT SELECTION:**
+1. **Standard Analysis**: 
+   - Filter: Accounts with 500+ followers
+   - Cap: 150 accounts (for speed)
+   - Target: Quick results for moderately active accounts
+
+2. **Deep Analysis**: 
+   - Filter: Accounts with 1000+ followers  
+   - Cap: NONE - analyze ALL qualifying accounts
+   - Target: Comprehensive analysis of high-quality accounts
+
+**WHY THIS APPROACH IS BETTER:**
+- **Quality Focus**: 1000+ followers indicates real, active social accounts
+- **Complete Coverage**: No arbitrary caps means we don't miss high-quality connections
+- **Targeted**: Instead of analyzing random accounts, focus on those likely to have good networks
+- **Scalable**: Automatically adjusts to user's network composition
+
+**EXPECTED IMPROVEMENTS:**
+- **Data Quality**: Much higher quality recommendations from accounts with real followings
+- **Completeness**: Won't miss connections due to arbitrary account limits
+- **Efficiency**: Focus API calls on accounts most likely to yield good results
+- **User-Specific**: Results scale with the quality of accounts the user follows
+
+**🚨 PERFORMANCE OPTIMIZATION TODO (REVISIT LATER):**
+
+**Current Results (EXCELLENT QUALITY):**
+- mjc716: 164 mutuals 🚀
+- gmonchain.eth: 103 mutuals  
+- nickysap: 87 mutuals
+- yashhsm: 75 mutuals
+- 103 accounts with 15+ mutuals, 25 with 30+ mutuals, 6 with 50+ mutuals!
+
+**Current Problems (PERFORMANCE):**
+- Deep analysis: 431 seconds (7+ minutes) - UNACCEPTABLE for production
+- Still hitting rate limits despite smart rate limiting
+- Processing 1,529 accounts with 1000+ followers = too many API calls
+- Need to find balance between quality and speed
+
+**Future Optimization Ideas:**
+1. **Smarter Sampling**: Instead of ALL 1000+ accounts, sample strategically
+2. **Incremental Loading**: Show results as they come in, not all at once  
+3. **Caching Strategy**: Cache following lists for popular accounts
+4. **Parallel Processing**: Process multiple accounts simultaneously 
+5. **Progressive Analysis**: Start with highest follower accounts first
+6. **User Choice**: Let users choose speed vs completeness
+7. **Background Processing**: Queue analysis, notify when complete
+
+**Target Performance Goals:**
+- Standard: <30 seconds
+- Deep: <2 minutes  
+- No rate limit hits
+- Maintain current quality level
+
 ## Executor's Feedback or Assistance Requests
 
-**Task 11 Complete**: Successfully wired up the main home page with complete Friend Finder interface. The app now has a professional CRT-themed design with real API integration, FID input, and all core functionality working. Ready to test manually and proceed to Task 12 (OneWayList component).
+**Task 11 STATUS**: ✅ **COMPLETED** - Core algorithm working with excellent quality results. Performance optimization needed but can be revisited later.
 
-Current recommendation algorithm is working correctly but returns 0 results due to strict quality filtering. This ensures only high-quality warm connections are recommended. For testing purposes, the empty state displays properly.
+**Task 12 STATUS**: ✅ **COMPLETED** - OneWayList component created with two-column layout, CRT theme, follow/unfollow actions, mobile responsive design, and loading states.
+
+**Task 13 READY**: ⭐ **STARTING NEXT** - Build one-way analysis page to display asymmetric follow relationships using the OneWayList component.
 
 ## Lessons
 
