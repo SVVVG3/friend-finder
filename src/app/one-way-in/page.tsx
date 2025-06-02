@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import OneWayList, { OneWayUser } from '../../../components/OneWayList'
+import Image from 'next/image'
 
 interface FarcasterUser {
   fid: number
@@ -13,8 +13,86 @@ interface FarcasterUser {
   bio?: string
 }
 
+// Individual user card component for one-way in
+function OneWayInCard({ 
+  user, 
+  onFollowUser
+}: { 
+  user: FarcasterUser
+  onFollowUser?: (fid: number) => void
+}) {
+  const [imageError, setImageError] = useState(false)
+  
+  const { 
+    fid, 
+    username, 
+    displayName, 
+    followerCount, 
+    followingCount, 
+    pfpUrl,
+    bio 
+  } = user
+
+  return (
+    <div className="user-card">
+      <div className="user-header">
+        <div className="user-avatar">
+          {pfpUrl && !imageError ? (
+            <Image 
+              src={pfpUrl} 
+              alt={`${displayName} avatar`}
+              width={40}
+              height={40}
+              className="avatar-img"
+              onError={() => setImageError(true)}
+              unoptimized={true}
+              priority={false}
+            />
+          ) : (
+            <div className="avatar-placeholder">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+        
+        <div className="user-info">
+          <h4 className="user-name">{displayName}</h4>
+          <p className="user-username">@{username}</p>
+        </div>
+
+        <div className="user-actions">
+          <button 
+            className="follow-btn"
+            onClick={() => onFollowUser?.(fid)}
+            aria-label={`Follow ${displayName}`}
+          >
+            Follow Back
+          </button>
+        </div>
+      </div>
+
+      {bio && (
+        <div className="user-bio">
+          <p>{bio.length > 100 ? `${bio.substring(0, 100)}...` : bio}</p>
+        </div>
+      )}
+
+      <div className="user-stats">
+        <div className="stat">
+          <span className="stat-value">{followerCount.toLocaleString()}</span>
+          <span className="stat-label">followers</span>
+        </div>
+        <div className="stat">
+          <span className="stat-value">{followingCount.toLocaleString()}</span>
+          <span className="stat-label">following</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function OneWayInPage() {
-  const [oneWayIn, setOneWayIn] = useState<OneWayUser[]>([])
+  const [oneWayIn, setOneWayIn] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<string>('')
@@ -168,24 +246,32 @@ export default function OneWayInPage() {
           </div>
         )}
 
-        {/* Results - Only show one-way IN */}
-        <div className="results-section">
-          {oneWayIn.length > 0 && (
+        {/* Results Section */}
+        {error && (
+          <div className="error-message">
+            <div className="error-icon">⚠️</div>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {oneWayIn.length > 0 && (
+          <div className="results-section">
             <div className="results-header">
               <h2>🌟 {oneWayIn.length} accounts who follow you but you don't follow back</h2>
               <p className="results-subtitle">Great opportunities to grow your network with interested followers</p>
             </div>
-          )}
-          
-          <OneWayList
-            oneWayOut={[]} // Empty for this page
-            oneWayIn={oneWayIn}
-            loading={loading}
-            error={error || undefined}
-            onFollowUser={handleFollowUser}
-            className="one-way-results"
-          />
-        </div>
+            
+            <div className="user-list">
+              {oneWayIn.map((user) => (
+                <OneWayInCard
+                  key={user.fid}
+                  user={user}
+                  onFollowUser={handleFollowUser}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -367,6 +453,26 @@ export default function OneWayInPage() {
           color: #00aa00;
         }
 
+        .error-message {
+          text-align: center;
+          padding: 20px;
+          border: 1px solid #ff4444;
+          border-radius: 8px;
+          background: rgba(255, 68, 68, 0.05);
+          margin-bottom: 24px;
+        }
+
+        .error-icon {
+          font-size: 32px;
+          margin-bottom: 8px;
+        }
+
+        .error-message p {
+          color: #ff4444;
+          margin: 0;
+          font-size: 14px;
+        }
+
         .results-section {
           margin-top: 32px;
         }
@@ -386,6 +492,144 @@ export default function OneWayInPage() {
           color: #00aa00;
           font-size: 12px;
           margin: 0;
+        }
+
+        .user-list {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .user-card {
+          background: rgba(0, 255, 0, 0.03);
+          border: 1px solid #00aa00;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 12px;
+          font-family: 'Monaco', 'Menlo', monospace;
+          box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+          transition: all 0.2s ease;
+        }
+
+        .user-card:hover {
+          background: rgba(0, 255, 0, 0.06);
+          box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+          transform: translateY(-1px);
+        }
+
+        .user-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 8px;
+        }
+
+        .user-avatar {
+          flex-shrink: 0;
+        }
+
+        .avatar-img {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1px solid #00aa00;
+        }
+
+        .avatar-placeholder {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1px solid #00aa00;
+          background: rgba(0, 255, 0, 0.05);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #00aa00;
+          font-weight: bold;
+          font-size: 14px;
+        }
+
+        .user-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .user-name {
+          color: #00ff00;
+          margin: 0 0 2px 0;
+          font-size: 14px;
+          font-weight: bold;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-username {
+          color: #00cc00;
+          margin: 0;
+          font-size: 12px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-actions {
+          flex-shrink: 0;
+        }
+
+        .follow-btn {
+          background: rgba(0, 255, 0, 0.1);
+          border: 1px solid #00ff00;
+          color: #00ff00;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 12px;
+          transition: all 0.2s ease;
+        }
+
+        .follow-btn:hover {
+          background: rgba(0, 255, 0, 0.2);
+          box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+        }
+
+        .user-bio {
+          margin-bottom: 8px;
+          padding: 6px 8px;
+          background: rgba(0, 255, 0, 0.02);
+          border-radius: 4px;
+          border-left: 2px solid #00aa00;
+        }
+
+        .user-bio p {
+          color: #00cc00;
+          font-size: 12px;
+          margin: 0;
+          line-height: 1.3;
+        }
+
+        .user-stats {
+          display: flex;
+          gap: 16px;
+        }
+
+        .stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+        }
+
+        .stat-value {
+          color: #00ff00;
+          font-weight: bold;
+          font-size: 12px;
+        }
+
+        .stat-label {
+          color: #00aa00;
+          font-size: 10px;
         }
 
         .loading-overlay {
