@@ -112,6 +112,7 @@ export default function OneWayInPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<string>('466111')
+  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -224,28 +225,35 @@ export default function OneWayInPage() {
     }
   }
 
-  // Notify Farcaster frame is ready immediately when component mounts
+  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
     const initializeFrame = async () => {
       try {
-        // Call ready as soon as the interface is loaded, not waiting for data
+        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
-        console.log('🚀 Frame ready called immediately on mount')
+        console.log('✅ Frame ready called successfully - splash screen dismissed')
+        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
+        setFrameReady(true) // Continue anyway to avoid blocking
       }
     }
     
     initializeFrame()
-  }, []) // Run once on mount
+  }, []) // Run once on mount - HIGHEST PRIORITY
 
-  // Load data on mount - separate from frame ready
+  // 📊 LOWER PRIORITY: Load data only AFTER frame is ready
   useEffect(() => {
-    // Only run if we have a valid FID
+    if (!frameReady) {
+      console.log('⏳ Waiting for frame ready before loading data...')
+      return
+    }
+    
+    console.log('📊 Frame is ready, now loading data...')
     if (userFid && userFid.trim() !== '') {
       analyzeOneWayIn(userFid)
     }
-  }, [userFid, analyzeOneWayIn]) // Include dependencies but function is memoized
+  }, [frameReady, userFid, analyzeOneWayIn]) // Only run after frameReady is true
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">

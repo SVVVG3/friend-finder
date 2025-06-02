@@ -116,6 +116,7 @@ export default function OneWayOutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<number>(466111)
+  const [frameReady, setFrameReady] = useState(false)
   const [stats, setStats] = useState<{
     totalFollowers: number
     totalFollowing: number
@@ -172,7 +173,6 @@ export default function OneWayOutPage() {
       
       console.log(`✅ One-way OUT analysis complete: ${sortedOneWayOut.length} asymmetric follows found`)
       
-      // Frame ready is now called immediately on mount, not here
     } catch (err) {
       console.error('❌ One-way OUT analysis failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze relationships')
@@ -184,28 +184,35 @@ export default function OneWayOutPage() {
     }
   }, [])
 
-  // Notify Farcaster frame is ready immediately when component mounts
+  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
     const initializeFrame = async () => {
       try {
-        // Call ready as soon as the interface is loaded, not waiting for data
+        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
-        console.log('🚀 Frame ready called immediately on mount')
+        console.log('✅ Frame ready called successfully - splash screen dismissed')
+        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
+        setFrameReady(true) // Continue anyway to avoid blocking
       }
     }
     
     initializeFrame()
-  }, []) // Run once on mount
+  }, []) // Run once on mount - HIGHEST PRIORITY
 
-  // Load data on mount - separate from frame ready
+  // 📊 LOWER PRIORITY: Load data only AFTER frame is ready
   useEffect(() => {
-    // Only run if we have a valid FID
+    if (!frameReady) {
+      console.log('⏳ Waiting for frame ready before loading data...')
+      return
+    }
+    
+    console.log('📊 Frame is ready, now loading data...')
     if (userFid && userFid > 0) {
       analyzeOneWayOut(userFid)
     }
-  }, [userFid, analyzeOneWayOut]) // Include dependencies but function is memoized
+  }, [frameReady, userFid, analyzeOneWayOut]) // Only run after frameReady is true
 
   // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {

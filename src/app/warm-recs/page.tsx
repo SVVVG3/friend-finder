@@ -91,27 +91,13 @@ export default function Home() {
     }
   }, [])
 
-  // Notify Farcaster frame is ready immediately when component mounts
+  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
     const initializeFrame = async () => {
       try {
-        console.log('🚀 Starting frame initialization...')
-        console.log('🔍 Checking if in Mini App environment...')
-        
-        // Add environment debugging
-        console.log('Environment check:', {
-          hasWindow: typeof window !== 'undefined',
-          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'SSR',
-          isInIframe: typeof window !== 'undefined' ? window.self !== window.top : false,
-          frameElement: typeof window !== 'undefined' ? !!window.frameElement : false
-        })
-
-        // Check if SDK is available
-        console.log('🔍 SDK availability:', { sdk: !!sdk, actions: !!sdk?.actions, ready: !!sdk?.actions?.ready })
-        
-        // Call ready as soon as the interface is loaded, not waiting for data
+        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
-        console.log('✅ Frame ready called successfully')
+        console.log('✅ Frame ready called successfully - splash screen dismissed')
         setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
@@ -124,17 +110,23 @@ export default function Home() {
         } else {
           console.error('Unknown error type:', error)
         }
+        setFrameReady(true) // Continue anyway to avoid blocking
       }
     }
     
     initializeFrame()
-  }, []) // Run once on mount
+  }, []) // Run once on mount - HIGHEST PRIORITY
 
-  // Load recommendations on mount
+  // 📊 LOWER PRIORITY: Load data only AFTER frame is ready
   useEffect(() => {
-    // Load data separately from frame ready
+    if (!frameReady) {
+      console.log('⏳ Waiting for frame ready before loading data...')
+      return
+    }
+    
+    console.log('📊 Frame is ready, now loading data...')
     fetchRecommendations(userFid)
-  }, [userFid, fetchRecommendations]) // Include dependencies but function is memoized
+  }, [frameReady, userFid, fetchRecommendations]) // Only run after frameReady is true
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFid = parseInt(e.target.value) || 466111
@@ -160,11 +152,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
-      {/* Debug indicator */}
-      <div className="fixed top-0 right-0 bg-red-600 text-white p-2 text-xs z-50">
-        React: ✅ | Frame: {frameReady ? '✅' : '⏳'}
-      </div>
-      
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">

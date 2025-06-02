@@ -20,26 +20,29 @@ export default function OneWayPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<string>('466111')
+  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
     mutualConnections: number
   } | null>(null)
 
-  // Notify Farcaster frame is ready immediately when component mounts
+  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
     const initializeFrame = async () => {
       try {
-        // Call ready as soon as the interface is loaded, not waiting for data
+        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
-        console.log('🚀 Frame ready called immediately on mount')
+        console.log('✅ Frame ready called successfully - splash screen dismissed')
+        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
+        setFrameReady(true) // Continue anyway to avoid blocking
       }
     }
     
     initializeFrame()
-  }, []) // Run once on mount
+  }, []) // Run once on mount - HIGHEST PRIORITY
 
   // Calculate one-way relationships
   const calculateOneWayRelationships = (
