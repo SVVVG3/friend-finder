@@ -46,7 +46,7 @@ Following the 19 tasks outlined in tasks.md:
 - [x] Task 3: Add miniapp config files ✅ **COMPLETED** - miniapp.config.json and vercel.json created and tested
 - [x] Task 4: Set up Supabase + .env ✅ **COMPLETED** - Database connection configured and verified
 - [x] Task 5: Create Neynar API wrapper ✅ **COMPLETED** - Farcaster API client configured and verified
-- [ ] Task 6: Add Farcaster helpers
+- [x] Task 6: Add Farcaster helpers ✅ **COMPLETED** - Domain-specific API wrappers created and tested
 - [ ] Task 7: Add profile cache utility
 - [ ] Task 8: Build sorting utilities
 - [ ] Task 9: Create recommendations API route
@@ -63,23 +63,25 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Current Status / Progress Tracking
 
-**Current Task**: Task 5 - Create Neynar API wrapper ✅ **COMPLETED**
-**Status**: Task 5 completed successfully. Neynar API client configured and verified working with Farcaster API.
+**Current Task**: Task 6 - Add Farcaster helpers ✅ **COMPLETED**
+**Status**: Task 6 completed successfully. Domain-specific Farcaster API wrapper functions created and verified working.
 
 **Success Criteria Met**: 
-- ✅ Added NEYNAR_API_KEY to .env.local
-- ✅ Created lib/neynar.ts with initialized NeynarAPIClient
-- ✅ Verified connection via API test endpoint
-- ✅ Successfully called fetchUserFollowing() with test FID
-- ✅ API returned expected data structure (users, next cursor)
+- ✅ Created lib/farcaster.ts with helper functions
+- ✅ Added getFollowers(fid) function with pagination support
+- ✅ Added getFollowing(fid) function with pagination support  
+- ✅ Added getUserProfile(fid) function
+- ✅ Added getMutualConnections(userFid, targetFid) function
+- ✅ Verified test data comes back for real FID (Dan Romero FID 3)
+- ✅ Type-safe interfaces defined for FarcasterUser and PaginatedResponse
 
-**Next Task**: Task 6 - Add Farcaster helpers
+**Next Task**: Task 7 - Add profile cache utility
 
 ## Executor's Feedback or Assistance Requests
 
-**Task 5 Complete**: Successfully configured Neynar API wrapper. The Farcaster API client is properly initialized and can successfully call core methods like fetchUserFollowing(). Environment variables are secure and API connection verified through runtime testing. Ready to proceed to Task 6 (Add Farcaster helpers).
+**Task 6 Complete**: Successfully created Farcaster helper functions. All domain-specific API wrappers are working correctly with proper TypeScript types. Functions tested with real FID data (Dan Romero) and returning expected profile, followers, and following information. Ready to proceed to Task 7 (Add profile cache utility).
 
-Waiting for user confirmation to test and commit before moving to Task 6.
+Waiting for user confirmation to test and commit before moving to Task 7.
 
 ## Lessons
 
