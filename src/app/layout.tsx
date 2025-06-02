@@ -27,17 +27,36 @@ export const metadata: Metadata = {
     description: "Discover warm connections and analyze one-way follows in your Farcaster network",
     type: "website",
     locale: "en_US",
+    images: ["/FriendFinderEmbed.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Friend Finder | Farcaster Network Analysis",
     description: "Discover warm connections and analyze one-way follows in your Farcaster network",
+    images: ["/FriendFinderEmbed.png"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Friend Finder",
   },
+  other: {
+    // Farcaster Frame meta tag for social sharing
+    'fc:frame': JSON.stringify({
+      version: "next",
+      imageUrl: "/FriendFinderEmbed.png",
+      button: {
+        title: "🔍 Analyze Network",
+        action: {
+          type: "launch_frame",
+          name: "Friend Finder",
+          url: "https://friend-finder-liard.vercel.app",
+          splashImageUrl: "/FriendFinderSplashImage.png",
+          splashBackgroundColor: "#000000"
+        }
+      }
+    })
+  }
 };
 
 export const viewport: Viewport = {
@@ -56,6 +75,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark overflow-x-hidden">
+      <head>
+        {/* Additional Farcaster Frame meta tags */}
+        <meta name="fc:frame" content={JSON.stringify({
+          version: "next",
+          imageUrl: "/FriendFinderEmbed.png",
+          button: {
+            title: "🔍 Analyze Network",
+            action: {
+              type: "launch_frame", 
+              name: "Friend Finder",
+              url: "https://friend-finder-liard.vercel.app",
+              splashImageUrl: "/FriendFinderSplashImage.png",
+              splashBackgroundColor: "#000000"
+            }
+          }
+        })} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen text-green-400 overflow-x-hidden w-full pb-20 sm:pb-24`}
       >

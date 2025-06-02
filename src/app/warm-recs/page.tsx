@@ -10,6 +10,7 @@ import {
   LoadingButton,
   CRTEmptyState 
 } from '../../../components/LoadingStates'
+import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
 
 export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
@@ -59,6 +60,9 @@ export default function Home() {
         setRecommendations(data.recommendations || [])
         setAnalysisStats(data.debug)
         setIsDeepAnalysis(deep)
+        
+        // Notify Farcaster that frame is ready when content loads
+        await notifyFrameReady()
       } else {
         throw new Error(data.message || 'Failed to get recommendations')
       }
@@ -73,9 +77,17 @@ export default function Home() {
     }
   }
 
-  // Load recommendations on mount
+  // Load recommendations on mount and notify frame ready
   useEffect(() => {
-    fetchRecommendations(userFid)
+    const initializePage = async () => {
+      await fetchRecommendations(userFid)
+      // Additional frame ready call for initial page load
+      if (!loading) {
+        await notifyFrameReady()
+      }
+    }
+    
+    initializePage()
   }, [userFid])
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {

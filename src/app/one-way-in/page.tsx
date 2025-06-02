@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { 
   CRTSpinner, 
@@ -11,6 +11,7 @@ import {
   CRTCardSkeleton,
   APIProgressTracker
 } from '../../../components/LoadingStates'
+import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -192,6 +193,8 @@ export default function OneWayInPage() {
         oneWayInCount: oneWayInUsers.length
       })
 
+      // Notify Farcaster that frame is ready when content loads
+      await notifyFrameReady()
     } catch (err) {
       console.error('❌ One-way IN analysis failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
@@ -221,6 +224,19 @@ export default function OneWayInPage() {
       analyzeOneWayIn(userFid.trim())
     }
   }
+
+  // Load data on mount and notify frame ready
+  useEffect(() => {
+    const initializePage = async () => {
+      await analyzeOneWayIn(userFid)
+      // Additional frame ready call for initial page load
+      if (!loading) {
+        await notifyFrameReady()
+      }
+    }
+    
+    initializePage()
+  }, [userFid])
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">

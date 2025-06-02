@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { 
   CRTSpinner, 
@@ -8,17 +8,23 @@ import {
   CRTErrorState, 
   LoadingButton,
   CRTEmptyState,
-  CRTCardSkeleton
+  CRTCardSkeleton,
+  APIProgressTracker
 } from '../../../components/LoadingStates'
+import { notifyFrameReady, isInFarcaster } from '../../../lib/farcaster-sdk'
 
 interface FarcasterUser {
   fid: number
   username: string
   displayName: string
+  pfpUrl: string
   followerCount: number
   followingCount: number
-  pfpUrl?: string
   bio?: string
+  verifiedAddresses?: {
+    eth_addresses: string[]
+    sol_addresses: string[]
+  }
 }
 
 // Individual user card component for one-way out
@@ -108,95 +114,86 @@ function OneWayOutCard({
 }
 
 export default function OneWayOutPage() {
-  const [oneWayOut, setOneWayOut] = useState<FarcasterUser[]>([])
+  const [oneWayUsers, setOneWayUsers] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('')
-  const [analysisStats, setAnalysisStats] = useState<{
-    totalFollowing: number
-    totalFollowers: number
-    oneWayOutCount: number
-  } | null>(null)
+  const [userFid, setUserFid] = useState<number>(466111)
+  const [stats, setStats] = useState<any>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
-  // Calculate one-way OUT relationships only
-  const calculateOneWayOut = (
-    following: FarcasterUser[], 
-    followers: FarcasterUser[]
-  ) => {
-    const followerFids = new Set(followers.map(u => u.fid))
-    // One-way out: People you follow who don't follow you back
-    const oneWayOutUsers = following.filter(user => !followerFids.has(user.fid))
-    
-    // Sort by follower count (highest first) to show most influential accounts at top
-    return oneWayOutUsers.sort((a, b) => b.followerCount - a.followerCount)
-  }
-
-  // Analyze one-way OUT relationships
-  const analyzeOneWayOut = async (fid: string) => {
-    setLoading(true)
-    setError(null)
-    setLoadingStage('Initializing analysis...')
-    
+  const analyzeOneWayOut = async (fid: number) => {
     try {
-      console.log(`🔍 Starting one-way OUT analysis for FID: ${fid}`)
+      setLoading(true)
+      setError(null)
+      setStats(null)
+      setLoadingStage('Initializing...')
       
-      setLoadingStage('Fetching your network data...')
+      // Stage progression 
+      setTimeout(() => setLoadingStage('Fetching network data...'), 500)
+      setTimeout(() => setLoadingStage('Processing relationships...'), 2000)
+      setTimeout(() => setLoadingStage('Calculating asymmetric follows...'), 4000)
       
-      // Fetch both followers and following in parallel
-      const [followingResponse, followersResponse] = await Promise.all([
-        fetch(`/api/following?fid=${fid}`),
-        fetch(`/api/followers?fid=${fid}`)
+      console.log(`🔍 Analyzing one-way OUT for FID ${fid}...`)
+      
+      // Fetch both followers and following
+      const [followersResponse, followingResponse] = await Promise.all([
+        fetch(`/api/followers?fid=${fid}`),
+        fetch(`/api/following?fid=${fid}`)
       ])
 
-      if (!followingResponse.ok) {
-        throw new Error(`Failed to fetch following: ${followingResponse.statusText}`)
-      }
-      
-      if (!followersResponse.ok) {
-        throw new Error(`Failed to fetch followers: ${followersResponse.statusText}`)
+      if (!followersResponse.ok || !followingResponse.ok) {
+        throw new Error('Failed to fetch network data')
       }
 
-      setLoadingStage('Processing network data...')
-
-      const followingData = await followingResponse.json()
       const followersData = await followersResponse.json()
+      const followingData = await followingResponse.json()
 
-      if (!followingData.success) {
-        throw new Error(followingData.error || 'Failed to fetch following')
+      if (!followersData.success || !followingData.success) {
+        throw new Error(followersData.message || followingData.message || 'API error')
       }
+
+      // Calculate one-way OUT (people you follow who don't follow you back)
+      const followersSet = new Set(followersData.followers.map((user: FarcasterUser) => user.fid))
+      const oneWayOut = followingData.following.filter((user: FarcasterUser) => !followersSet.has(user.fid))
       
-      if (!followersData.success) {
-        throw new Error(followersData.error || 'Failed to fetch followers')
-      }
+      // Sort by follower count (most influential first)
+      const sortedOneWayOut = oneWayOut.sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
 
-      console.log(`📊 Fetched ${followingData.following.length} following, ${followersData.followers.length} followers`)
-
-      setLoadingStage('Calculating one-way relationships...')
-
-      // Calculate one-way OUT relationships
-      const oneWayOutUsers = calculateOneWayOut(
-        followingData.following,
-        followersData.followers
-      )
-
-      console.log(`🔄 One-way OUT analysis results: ${oneWayOutUsers.length} accounts`)
-
-      setOneWayOut(oneWayOutUsers)
-      setAnalysisStats({
-        totalFollowing: followingData.following.length,
+      setOneWayUsers(sortedOneWayOut)
+      setStats({
         totalFollowers: followersData.followers.length,
-        oneWayOutCount: oneWayOutUsers.length
+        totalFollowing: followingData.following.length,
+        oneWayOutCount: sortedOneWayOut.length,
+        mutualCount: followingData.following.length - sortedOneWayOut.length
       })
-
+      
+      console.log(`✅ One-way OUT analysis complete: ${sortedOneWayOut.length} asymmetric follows found`)
+      
+      // Notify Farcaster that frame is ready when content loads
+      await notifyFrameReady()
     } catch (err) {
       console.error('❌ One-way OUT analysis failed:', err)
-      setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
+      setError(err instanceof Error ? err.message : 'Failed to analyze relationships')
+      setOneWayUsers([])
+      setStats(null)
     } finally {
       setLoading(false)
       setLoadingStage('Initializing...')
     }
   }
+
+  // Load data on mount and notify frame ready
+  useEffect(() => {
+    const initializePage = async () => {
+      await analyzeOneWayOut(userFid)
+      // Additional frame ready call for initial page load
+      if (!loading) {
+        await notifyFrameReady()
+      }
+    }
+    
+    initializePage()
+  }, [userFid])
 
   // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {
@@ -207,14 +204,14 @@ export default function OneWayOutPage() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (userFid.trim()) {
-      analyzeOneWayOut(userFid.trim())
+    if (userFid) {
+      analyzeOneWayOut(userFid)
     }
   }
 
   const handleRetry = () => {
-    if (userFid.trim()) {
-      analyzeOneWayOut(userFid.trim())
+    if (userFid) {
+      analyzeOneWayOut(userFid)
     }
   }
 
@@ -249,7 +246,7 @@ export default function OneWayOutPage() {
                 id="fid"
                 type="number"
                 value={userFid}
-                onChange={(e) => setUserFid(e.target.value)}
+                onChange={(e) => setUserFid(Number(e.target.value))}
                 placeholder="e.g. 3621"
                 className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
                 disabled={loading}
@@ -261,7 +258,7 @@ export default function OneWayOutPage() {
               <LoadingButton 
                 type="submit" 
                 loading={loading}
-                disabled={loading || !userFid.trim()}
+                disabled={loading || !userFid}
                 className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
               >
                 Analyze
@@ -271,21 +268,21 @@ export default function OneWayOutPage() {
         </form>
 
         {/* Analysis Stats - Mobile Responsive */}
-        {analysisStats && !loading && (
+        {stats && !loading && (
           <div className="mb-6 p-3 sm:p-4 bg-gray-900 border border-green-600 rounded-lg mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow">
             <h3 className="text-green-400 font-bold mb-3 text-center sm:text-left text-sm sm:text-base crt-text-glow">📊 Analysis Results</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm w-full">
               <div className="text-center sm:text-left">
                 <span className="text-green-600 block sm:inline">You Follow:</span>
-                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.totalFollowing.toLocaleString()}</div>
+                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{stats.totalFollowing.toLocaleString()}</div>
               </div>
               <div className="text-center sm:text-left">
                 <span className="text-green-600 block sm:inline">Follow You:</span>
-                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.totalFollowers.toLocaleString()}</div>
+                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{stats.totalFollowers.toLocaleString()}</div>
               </div>
               <div className="text-center sm:text-left">
                 <span className="text-orange-400 block sm:inline">One-Way Out:</span>
-                <div className="text-orange-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.oneWayOutCount.toLocaleString()}</div>
+                <div className="text-orange-400 font-bold text-lg sm:text-base crt-text-glow">{stats.oneWayOutCount.toLocaleString()}</div>
               </div>
             </div>
           </div>
@@ -317,11 +314,11 @@ export default function OneWayOutPage() {
         )}
 
         {/* Results - Mobile Optimized */}
-        {!loading && !error && oneWayOut.length > 0 && (
+        {!loading && !error && oneWayUsers.length > 0 && (
           <>
             <div className="mb-4 text-center px-2">
               <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-2 crt-text-glow">
-                👤 {oneWayOut.length} accounts you follow but don't follow back
+                👤 {oneWayUsers.length} accounts you follow but don't follow back
               </h2>
               <p className="text-green-600 text-sm sm:text-base leading-relaxed">
                 Consider unfollowing or wait to see if they follow back
@@ -332,7 +329,7 @@ export default function OneWayOutPage() {
             </div>
             
             <div className="space-y-0">
-              {oneWayOut.map((user) => (
+              {oneWayUsers.map((user) => (
                 <OneWayOutCard
                   key={user.fid}
                   user={user}
@@ -344,7 +341,7 @@ export default function OneWayOutPage() {
         )}
 
         {/* Enhanced Empty State */}
-        {!loading && !error && oneWayOut.length === 0 && analysisStats && (
+        {!loading && !error && oneWayUsers.length === 0 && stats && (
           <CRTEmptyState
             icon="🎯"
             title="No One-Way Following Found"
