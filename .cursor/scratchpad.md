@@ -47,7 +47,7 @@ Following the 19 tasks outlined in tasks.md:
 - [x] Task 4: Set up Supabase + .env ✅ **COMPLETED** - Database connection configured and verified
 - [x] Task 5: Create Neynar API wrapper ✅ **COMPLETED** - Farcaster API client configured and verified
 - [x] Task 6: Add Farcaster helpers ✅ **COMPLETED** - Domain-specific API wrappers created and tested
-- [ ] Task 7: Add profile cache utility
+- [x] Task 7: Add profile cache utility ✅ **COMPLETED** - Profile caching implemented and verified working
 - [ ] Task 8: Build sorting utilities
 - [ ] Task 9: Create recommendations API route
 - [ ] Task 10: Create WarmRecsList component
@@ -63,19 +63,22 @@ Following the 19 tasks outlined in tasks.md:
 
 ## Current Status / Progress Tracking
 
-**Current Task**: Task 6 - Add Farcaster helpers ✅ **COMPLETED**
-**Status**: Task 6 completed successfully. Domain-specific Farcaster API wrapper functions created and verified working.
+**Current Task**: Task 7 - Add profile cache utility ✅ **COMPLETED**
+**Status**: Task 7 completed successfully. Profile cache utility created and verified working with cache hit/miss behavior.
 
 **Success Criteria Met**: 
-- ✅ Created lib/farcaster.ts with helper functions
-- ✅ Added getFollowers(fid) function with pagination support
-- ✅ Added getFollowing(fid) function with pagination support  
-- ✅ Added getUserProfile(fid) function
-- ✅ Added getMutualConnections(userFid, targetFid) function
-- ✅ Verified test data comes back for real FID (Dan Romero FID 3)
-- ✅ Type-safe interfaces defined for FarcasterUser and PaginatedResponse
+- ✅ Created utils/profileCache.ts with ProfileCache class
+- ✅ Implemented in-memory caching with TTL (5 minutes)
+- ✅ Added cache hit/miss logic with performance optimization
+- ✅ Added batch profile fetching capability
+- ✅ Verified cache reuse behavior - fetches profile once and reuses it
+- ✅ Cache statistics and LRU eviction implemented
+- ✅ Error handling with fallback to expired cache
+- ✅ Performance improvement demonstrated (instant cache hits vs API calls)
 
-**Next Task**: Task 7 - Add profile cache utility
+**Test Results**: Cache working perfectly - first fetch uses API, subsequent fetches are instant cache hits. Batch fetching verified working for multiple profiles.
+
+**Next Task**: Task 8 - Build sorting utilities
 
 ## Executor's Feedback or Assistance Requests
 
