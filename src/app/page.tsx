@@ -7,17 +7,36 @@ import { sdk } from '@farcaster/frame-sdk'
 export default function HomePage() {
   const router = useRouter()
   const [frameReady, setFrameReady] = useState(false)
+  const [isInMiniApp, setIsInMiniApp] = useState(false)
 
   // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
     const initializeFrame = async () => {
       try {
-        console.log('🚀 HOME PAGE: Calling frame ready FIRST before redirect')
-        await sdk.actions.ready()
-        console.log('✅ Frame ready called successfully from home page - splash screen dismissed')
+        console.log('🚀 HOME PAGE: Initializing frame...')
+        
+        // Check if we're in a Mini App environment
+        const inMiniApp = sdk ? await sdk.isInMiniApp() : false
+        setIsInMiniApp(inMiniApp)
+        
+        console.log(`📱 Mini App Environment: ${inMiniApp}`)
+        
+        if (inMiniApp) {
+          console.log('🚀 Calling frame ready in Mini App environment')
+          await sdk.actions.ready()
+          console.log('✅ Frame ready called successfully - splash screen dismissed')
+        } else {
+          console.log('🌐 Running in browser environment - skipping ready() call')
+        }
+        
         setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready from home page:', error)
+        console.error('Error details:', {
+          name: error instanceof Error ? error.name : 'Unknown',
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        })
         setFrameReady(true) // Continue anyway to avoid blocking
       }
     }
@@ -44,6 +63,11 @@ export default function HomePage() {
         <p className="text-green-500 text-sm">
           {frameReady ? 'Redirecting to analysis...' : 'Setting up mini app...'}
         </p>
+        {/* Debug info */}
+        <div className="mt-4 text-xs text-green-600">
+          <p>Environment: {isInMiniApp ? 'Mini App' : 'Browser'}</p>
+          <p>Status: {frameReady ? 'Ready' : 'Initializing...'}</p>
+        </div>
       </div>
     </div>
   )

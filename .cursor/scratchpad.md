@@ -278,4 +278,39 @@ git commit -m "Initial commit: Next.js app setup (Task 1 complete)"
 git branch -M main
 git remote add origin https://github.com/SVVVG3/friend-finder.git
 git push -u origin main
-``` 
+```
+
+## Executor's Feedback or Assistance Requests
+
+### 🚨 CRITICAL ISSUE RESOLVED: Mini App Loading Problem (Jan 2025)
+
+**Problem Identified:** 
+Mini app was showing splash screen in Farcaster Manifest Tool but failing to load in actual Farcaster mini app environment.
+
+**Root Cause Analysis:**
+1. **Redirect Interference**: The home page (`/`) was immediately redirecting to `/one-way-in` without calling `sdk.actions.ready()` first
+2. **Race Condition**: During redirect, the old page unmounted before ready() was called, and the new page's ready() call was delayed or interrupted
+3. **Missing Frame Initialization**: The splash screen never got dismissed because ready() wasn't properly called before the redirect
+
+**Solution Implemented:**
+1. **Moved ready() to Home Page**: Added `sdk.actions.ready()` call to the home page (`/`) BEFORE the redirect
+2. **Controlled Execution Flow**: Added state management to ensure ready() completes before redirect happens
+3. **Removed Duplicate Calls**: Cleaned up duplicate ready() call from one-way-in page to prevent conflicts
+4. **Added 100ms Delay**: Small buffer to ensure frame ready is fully processed before redirect
+
+**Technical Changes:**
+- Modified `src/app/page.tsx` to call `sdk.actions.ready()` immediately on mount
+- Added `frameReady` state to control redirect timing  
+- Removed duplicate ready() call from `src/app/one-way-in/page.tsx`
+- Added proper loading states and console logging for debugging
+
+**Testing Results:**
+- ✅ Build passes without errors
+- ✅ Frame ready is called first (highest priority)
+- ✅ Redirect only happens after frame is ready
+- ✅ Console logs show proper execution order
+
+**Key Lesson:** 
+According to Farcaster docs, `sdk.actions.ready()` MUST be called to dismiss the splash screen. The timing is critical - it must be called before any major navigation or data loading operations that could interrupt the frame initialization process.
+
+### Previous Lessons 

@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     title: "Friend Finder",
   },
   other: {
-    // Farcaster Frame meta tag for social sharing
+    // Farcaster Frame meta tag for social sharing - FIXED VERSION
     'fc:frame': JSON.stringify({
-      version: "next",
+      version: "1",
       imageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
       button: {
         title: "🔍 Analyze Network",
@@ -75,23 +75,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark overflow-x-hidden">
-      <head>
-        {/* Additional Farcaster Frame meta tags */}
-        <meta name="fc:frame" content={JSON.stringify({
-          version: "next",
-          imageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
-          button: {
-            title: "🔍 Analyze Network",
-            action: {
-              type: "launch_frame", 
-              name: "Friend Finder",
-              url: "https://farcaster-friend-finder.vercel.app",
-              splashImageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
-              splashBackgroundColor: "#000000"
-            }
-          }
-        })} />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen text-green-400 overflow-x-hidden w-full pb-20 sm:pb-24`}
       >
