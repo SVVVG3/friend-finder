@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFollowing } from '../../../../lib/farcaster'
+import { getFollowing, getFollowers } from '../../../../lib/farcaster'
 import { profileCache } from '../../../../utils/profileCache'
 import { 
   sortWarmRecommendations, 
@@ -92,12 +92,21 @@ export async function GET(request: NextRequest) {
       try {
         console.log(`🔗 Checking mutuals for ${followedUser.username} (FID ${followedUser.fid})`)
         
-        // Get followers of this person (people who also follow them)
-        const followers = await getFollowing(followedUser.fid, 50) // Get their following for mutuals
+        // Get followers of this person (people who also follow them = potential recommendations)
+        const followers = await getFollowers(followedUser.fid, 50) // Get their followers for mutual connections
+        
+        console.log(`📊 Found ${followers.data.length} followers for ${followedUser.username}`)
         
         for (const potentialRec of followers.data) {
+          // Debug logging
+          if (!potentialRec.fid || potentialRec.fid === 0) {
+            console.warn(`⚠️ Invalid FID for potential recommendation:`, potentialRec)
+            continue
+          }
+          
           // Skip if this is the original user or someone they already follow
           if (potentialRec.fid === userFid || userFollowsFids.has(potentialRec.fid)) {
+            console.log(`⏭️ Skipping ${potentialRec.username} (FID ${potentialRec.fid}) - ${potentialRec.fid === userFid ? 'is original user' : 'already following'}`)
             continue
           }
 
@@ -105,11 +114,13 @@ export async function GET(request: NextRequest) {
           if (mutualCandidates.has(potentialRec.fid)) {
             const existing = mutualCandidates.get(potentialRec.fid)!
             existing.mutualCount = (existing.mutualCount || 0) + 1
+            console.log(`➕ Updated mutual count for ${potentialRec.username}: ${existing.mutualCount}`)
           } else {
             mutualCandidates.set(potentialRec.fid, {
               ...potentialRec,
               mutualCount: 1
             })
+            console.log(`✨ New recommendation candidate: ${potentialRec.username} (FID ${potentialRec.fid})`)
           }
         }
       } catch (error) {
@@ -122,7 +133,7 @@ export async function GET(request: NextRequest) {
 
     // Step 3: Filter and enhance recommendations
     const recommendations: UserWithMutuals[] = Array.from(mutualCandidates.values())
-      .filter(user => (user.mutualCount || 0) >= 2) // Require at least 2 mutual connections
+      .filter(user => (user.mutualCount || 0) >= 1) // Require at least 1 mutual connection for demo
       .map(user => ({
         ...user,
         score: calculateRecommendationScore(user)
@@ -135,46 +146,43 @@ export async function GET(request: NextRequest) {
     // Step 5: Get top N recommendations
     const topRecommendations = getTopUsers(sortedRecommendations, limit)
 
-    // Step 6: Enhance with cached profile data if needed
-    for (const rec of topRecommendations) {
-      try {
-        const enhancedProfile = await profileCache.getProfile(rec.fid)
-        // Update with any additional profile data from cache
-        rec.pfpUrl = enhancedProfile.pfpUrl || rec.pfpUrl
-        rec.bio = enhancedProfile.bio || rec.bio
-      } catch {
-        // Continue without enhanced data
-        console.warn(`⚠️ Could not enhance profile for FID ${rec.fid}`)
-      }
-    }
+    // Enhanced profile data for recommendations
+    console.log('🎨 Enriching recommendation profiles...')
+    const enrichedRecommendations = await Promise.all(
+      topRecommendations.map(async (rec) => {
+        try {
+          const profile = await profileCache.getProfile(rec.fid)
+          return {
+            ...rec,
+            pfpUrl: profile.pfpUrl || rec.pfpUrl,
+            bio: profile.bio || rec.bio
+          }
+        } catch (error) {
+          console.warn(`Failed to enrich profile for FID ${rec.fid}:`, error)
+          return rec
+        }
+      })
+    )
 
-    const processingTime = Date.now() - startTime
-    console.log(`✅ Generated ${topRecommendations.length} recommendations in ${processingTime}ms`)
+    const endTime = Date.now()
+    const totalTime = endTime - startTime
 
-    const response: RecommendationsResponse = {
+    console.log(`✅ Generated ${enrichedRecommendations.length} recommendations in ${totalTime}ms`)
+
+    return NextResponse.json({
       success: true,
-      userFid,
-      totalRecommendations: topRecommendations.length,
-      recommendations: topRecommendations,
-      processingTime
-    }
-
-    // Add debug information if requested
-    if (debugParam) {
-      response.cacheStats = profileCache.getStats()
-      response.debug = {
-        userFollowingCount: userFollowing.data.length,
-        totalCandidates: mutualCandidates.size,
-        filteredCandidates: recommendations.length,
-        topScores: topRecommendations.slice(0, 3).map(r => ({
-          username: r.username,
-          mutuals: r.mutualCount,
-          score: r.score
-        }))
-      }
-    }
-
-    return NextResponse.json(response)
+      recommendations: enrichedRecommendations,
+      ...(debugParam && {
+        debug: {
+          userFid: userFid,
+          totalFollowing: userFollowing.data.length,
+          totalCandidates: mutualCandidates.size,
+          filteredCandidates: recommendations.length,
+          processingTimeMs: totalTime,
+          cacheStats: profileCache.getStats()
+        }
+      })
+    })
 
   } catch (error) {
     console.error('Recommendations API error:', error)

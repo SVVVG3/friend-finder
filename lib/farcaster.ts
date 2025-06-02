@@ -20,14 +20,18 @@ export interface PaginatedResponse<T> {
 // Helper function to safely extract user data
 function extractUserData(user: unknown): FarcasterUser {
   const userData = user as Record<string, unknown>
+  
+  // Handle both direct user object and nested user object (from follow responses)
+  const userObj = userData.user as Record<string, unknown> || userData
+  
   return {
-    fid: (userData.fid as number) || 0,
-    username: (userData.username as string) || '',
-    displayName: (userData.display_name as string) || (userData.displayName as string) || (userData.username as string) || '',
-    followerCount: (userData.follower_count as number) || (userData.followerCount as number) || 0,
-    followingCount: (userData.following_count as number) || (userData.followingCount as number) || 0,
-    pfpUrl: (userData.pfp_url as string) || (userData.pfpUrl as string) || undefined,
-    bio: ((userData.profile as Record<string, unknown>)?.bio as Record<string, unknown>)?.text as string || (userData.bio as string) || undefined
+    fid: (userObj.fid as number) || 0,
+    username: (userObj.username as string) || '',
+    displayName: (userObj.display_name as string) || (userObj.displayName as string) || (userObj.username as string) || '',
+    followerCount: (userObj.follower_count as number) || (userObj.followerCount as number) || 0,
+    followingCount: (userObj.following_count as number) || (userObj.followingCount as number) || 0,
+    pfpUrl: (userObj.pfp_url as string) || (userObj.pfpUrl as string) || undefined,
+    bio: ((userObj.profile as Record<string, unknown>)?.bio as Record<string, unknown>)?.text as string || (userObj.bio as string) || undefined
   }
 }
 
