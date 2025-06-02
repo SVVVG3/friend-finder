@@ -1,103 +1,256 @@
-import Image from "next/image";
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import WarmRecsList from '../../components/WarmRecsList'
+import { UserWithMutuals } from '../../utils/sort'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [userFid, setUserFid] = useState<number>(3) // Default to Dan Romero for demo
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const fetchRecommendations = async (fid: number) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await fetch(`/api/recs?fid=${fid}&debug=true`)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch recommendations: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      setRecommendations(data.recommendations || [])
+    } catch (err) {
+      console.error('Error fetching recommendations:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load recommendations')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchRecommendations(userFid)
+  }, [userFid])
+
+  const handleFollowUser = (fid: number) => {
+    // For now, just show an alert - we'll integrate with Farcaster later
+    alert(`Following user with FID: ${fid}`)
+  }
+
+  const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFid = parseInt(e.target.value)
+    if (!isNaN(newFid) && newFid > 0) {
+      setUserFid(newFid)
+    }
+  }
+
+  return (
+    <div className="app-container">
+      <div className="app-content">
+        <header className="app-header">
+          <h1 className="app-title">
+            🔍 Friend Finder
+          </h1>
+          <p className="app-subtitle">
+            Discover warm connections through your Farcaster network
+          </p>
+          
+          <div className="fid-input-section">
+            <label htmlFor="fid-input" className="fid-label">
+              Enter Farcaster ID (FID):
+            </label>
+            <input
+              id="fid-input"
+              type="number"
+              value={userFid}
+              onChange={handleFidChange}
+              placeholder="e.g. 3"
+              className="fid-input"
+              min="1"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+            <button
+              onClick={() => fetchRecommendations(userFid)}
+              className="refresh-btn"
+              disabled={loading}
+            >
+              {loading ? '⏳ Loading...' : '🔄 Refresh'}
+            </button>
+          </div>
+        </header>
+
+        <main className="app-main">
+          <WarmRecsList
+            recommendations={recommendations}
+            loading={loading}
+            error={error || undefined}
+            onFollowUser={handleFollowUser}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </main>
+
+        <footer className="app-footer">
+          <p>
+            Built with ❤️ using{' '}
+            <a href="https://neynar.com" target="_blank" rel="noopener noreferrer">
+              Neynar API
+            </a>
+            {' '}and{' '}
+            <a href="https://farcaster.xyz" target="_blank" rel="noopener noreferrer">
+              Farcaster
+            </a>
+          </p>
+        </footer>
+      </div>
+
+      <style jsx>{`
+        .app-container {
+          min-height: 100vh;
+          background: #000;
+          color: #00ff00;
+          font-family: 'Monaco', 'Menlo', monospace;
+          padding: 20px;
+        }
+
+        .app-content {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        .app-header {
+          text-align: center;
+          margin-bottom: 40px;
+          padding: 20px;
+          border: 1px solid #00ff00;
+          border-radius: 8px;
+          background: rgba(0, 255, 0, 0.05);
+          box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+
+        .app-title {
+          font-size: 32px;
+          margin: 0 0 8px 0;
+          text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+          animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .app-subtitle {
+          font-size: 16px;
+          color: #00cc00;
+          margin: 0 0 24px 0;
+          opacity: 0.9;
+        }
+
+        .fid-input-section {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .fid-label {
+          color: #00aa00;
+          font-size: 14px;
+        }
+
+        .fid-input {
+          background: rgba(0, 255, 0, 0.1);
+          border: 1px solid #00ff00;
+          color: #00ff00;
+          padding: 8px 12px;
+          border-radius: 4px;
+          font-family: inherit;
+          font-size: 16px;
+          text-align: center;
+          width: 200px;
+        }
+
+        .fid-input:focus {
+          outline: none;
+          box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .fid-input::placeholder {
+          color: #00aa00;
+          opacity: 0.7;
+        }
+
+        .refresh-btn {
+          background: rgba(0, 255, 0, 0.1);
+          border: 1px solid #00ff00;
+          color: #00ff00;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 14px;
+          transition: all 0.2s ease;
+          min-width: 120px;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+          background: rgba(0, 255, 0, 0.2);
+          box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .refresh-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .app-main {
+          margin-bottom: 40px;
+        }
+
+        .app-footer {
+          text-align: center;
+          padding: 20px;
+          border-top: 1px solid #00ff00;
+          color: #00aa00;
+          font-size: 14px;
+        }
+
+        .app-footer a {
+          color: #00ff00;
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+
+        .app-footer a:hover {
+          color: #00ffff;
+          text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+
+        @keyframes glow {
+          from {
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+          }
+          to {
+            text-shadow: 0 0 20px rgba(0, 255, 0, 1), 0 0 30px rgba(0, 255, 0, 0.5);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .app-container {
+            padding: 10px;
+          }
+          
+          .app-title {
+            font-size: 24px;
+          }
+          
+          .fid-input-section {
+            flex-direction: column;
+            gap: 8px;
+          }
+          
+          .fid-input {
+            width: 100%;
+            max-width: 200px;
+          }
+        }
+      `}</style>
     </div>
-  );
+  )
 }
