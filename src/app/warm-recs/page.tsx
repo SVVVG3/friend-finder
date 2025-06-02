@@ -17,6 +17,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<number>(466111) // Your FID
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
+  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalRecommendations: number
     processingTime: number
@@ -29,6 +30,12 @@ export default function Home() {
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
+
+  // Add component mount debugging
+  useEffect(() => {
+    console.log('🎯 Home component mounted successfully')
+    console.log('🎯 React rendering working')
+  }, [])
 
   const fetchRecommendations = React.useCallback(async (fid: number, deep: boolean = false) => {
     try {
@@ -88,11 +95,35 @@ export default function Home() {
   useEffect(() => {
     const initializeFrame = async () => {
       try {
+        console.log('🚀 Starting frame initialization...')
+        console.log('🔍 Checking if in Mini App environment...')
+        
+        // Add environment debugging
+        console.log('Environment check:', {
+          hasWindow: typeof window !== 'undefined',
+          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'SSR',
+          isInIframe: typeof window !== 'undefined' ? window.self !== window.top : false,
+          frameElement: typeof window !== 'undefined' ? !!window.frameElement : false
+        })
+
+        // Check if SDK is available
+        console.log('🔍 SDK availability:', { sdk: !!sdk, actions: !!sdk?.actions, ready: !!sdk?.actions?.ready })
+        
         // Call ready as soon as the interface is loaded, not waiting for data
         await sdk.actions.ready()
-        console.log('🚀 Frame ready called immediately on mount')
+        console.log('✅ Frame ready called successfully')
+        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          })
+        } else {
+          console.error('Unknown error type:', error)
+        }
       }
     }
     
@@ -129,6 +160,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
+      {/* Debug indicator */}
+      <div className="fixed top-0 right-0 bg-red-600 text-white p-2 text-xs z-50">
+        React: ✅ | Frame: {frameReady ? '✅' : '⏳'}
+      </div>
+      
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">

@@ -44,14 +44,14 @@ export const metadata: Metadata = {
     // Farcaster Frame meta tag for social sharing
     'fc:frame': JSON.stringify({
       version: "next",
-      imageUrl: "/FriendFinderEmbed.png",
+      imageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
       button: {
         title: "🔍 Analyze Network",
         action: {
           type: "launch_frame",
           name: "Friend Finder",
           url: "https://farcaster-friend-finder.vercel.app",
-          splashImageUrl: "/FriendFinderSplashImage.png",
+          splashImageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
           splashBackgroundColor: "#000000"
         }
       }
@@ -79,14 +79,14 @@ export default function RootLayout({
         {/* Additional Farcaster Frame meta tags */}
         <meta name="fc:frame" content={JSON.stringify({
           version: "next",
-          imageUrl: "/FriendFinderEmbed.png",
+          imageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
           button: {
             title: "🔍 Analyze Network",
             action: {
               type: "launch_frame", 
               name: "Friend Finder",
               url: "https://farcaster-friend-finder.vercel.app",
-              splashImageUrl: "/FriendFinderSplashImage.png",
+              splashImageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
               splashBackgroundColor: "#000000"
             }
           }
