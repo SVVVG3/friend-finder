@@ -112,7 +112,9 @@ export default function OneWayInPage() {
     const followingFids = new Set(following.map(u => u.fid))
     // One-way in: People who follow you but you don't follow back
     const oneWayInUsers = followers.filter(user => !followingFids.has(user.fid))
-    return oneWayInUsers
+    
+    // Sort by follower count (highest first) to show most influential accounts at top
+    return oneWayInUsers.sort((a, b) => b.followerCount - a.followerCount)
   }
 
   // Analyze one-way IN relationships
@@ -288,6 +290,9 @@ export default function OneWayInPage() {
               </h2>
               <p className="text-green-600">
                 Great opportunities to grow your network with interested followers
+              </p>
+              <p className="text-green-500 text-sm mt-1">
+                📊 Sorted by follower count (most influential first)
               </p>
             </div>
             

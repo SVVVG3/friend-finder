@@ -112,7 +112,9 @@ export default function OneWayOutPage() {
     const followerFids = new Set(followers.map(u => u.fid))
     // One-way out: People you follow who don't follow you back
     const oneWayOutUsers = following.filter(user => !followerFids.has(user.fid))
-    return oneWayOutUsers
+    
+    // Sort by follower count (highest first) to show most influential accounts at top
+    return oneWayOutUsers.sort((a, b) => b.followerCount - a.followerCount)
   }
 
   // Analyze one-way OUT relationships
@@ -288,6 +290,9 @@ export default function OneWayOutPage() {
               </h2>
               <p className="text-green-600">
                 Consider unfollowing or wait to see if they follow back
+              </p>
+              <p className="text-green-500 text-sm mt-1">
+                📊 Sorted by follower count (most influential first)
               </p>
             </div>
             
