@@ -142,6 +142,9 @@ export default function OneWayPage() {
           <p className="subtitle">
             Discover asymmetric follow relationships in your Farcaster network
           </p>
+          <p className="api-note">
+            📊 Shows up to 200 followers and 200 following for analysis
+          </p>
         </header>
 
         {/* Input Form */}
@@ -205,7 +208,7 @@ export default function OneWayPage() {
             oneWayOut={oneWayOut}
             oneWayIn={oneWayIn}
             loading={loading}
-            error={error}
+            error={error || undefined}
             onFollowUser={handleFollowUser}
             onUnfollowUser={handleUnfollowUser}
             className="one-way-results"
@@ -257,6 +260,13 @@ export default function OneWayPage() {
           color: #00cc00;
           margin: 0;
           line-height: 1.4;
+        }
+
+        .api-note {
+          font-size: 12px;
+          color: #00aa00;
+          margin: 8px 0 0 0;
+          font-style: italic;
         }
 
         .input-form {

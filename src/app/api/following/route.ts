@@ -24,24 +24,28 @@ export async function GET(request: NextRequest) {
 
     console.log(`📤 Fetching following for FID: ${fid}`)
 
-    // Fetch all following (up to API limits)
-    const followingResponse = await getFollowing(fid, 1000)
+    // Fetch following with reasonable limit to avoid API rate limits
+    const followingResponse = await getFollowing(fid, 200)
     
     const following = followingResponse.data
     
-    console.log(`📤 Fetched ${following.length} following for FID ${fid}`)
+    console.log(`📤 Successfully fetched ${following.length} following for FID ${fid}`)
 
     return NextResponse.json({
       success: true,
       following: following,
-      count: following.length
+      count: following.length,
+      hasMore: followingResponse.hasMore,
+      nextCursor: followingResponse.nextCursor
     })
 
   } catch (error) {
     console.error('❌ Following API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch following'
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch following'
+      error: errorMessage,
+      details: error instanceof Error ? error.stack : undefined
     }, { status: 500 })
   }
 } 
