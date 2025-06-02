@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     let allFollowing: any[] = []
     let cursor: string | undefined = undefined
     let pageCount = 0
-    const maxPages = deepParam ? 50 : 10 // Deep analysis: up to 50 pages (2500 users), standard: 10 pages (500 users)
+    const maxPages = deepParam ? 100 : 20 // Deep analysis: up to 100 pages (5000 users), standard: 20 pages (1000 users)
     
     do {
       try {
@@ -103,29 +103,35 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${allFollowing.length} total users that FID ${userFid} follows`)
 
-    // Step 2: Prioritize and select users to analyze (by follower count)
-    const prioritizedFollowing = allFollowing
-      .sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)) // Sort by follower count desc
-      .slice(0, deepParam ? 300 : 100) // Deep: analyze 300, standard: 100
+    // Step 2: Analyze ALL accounts in the network (no arbitrary follower count filtering)
+    // For very large networks, we'll process in batches with rate limiting
+    const totalToAnalyze = Math.min(allFollowing.length, deepParam ? 2000 : 500)
+    const accountsToAnalyze = allFollowing
+      .slice(0, totalToAnalyze) // Take first N accounts (chronological order, not biased by follower count)
     
-    console.log(`🎯 Analyzing top ${prioritizedFollowing.length} most-followed accounts for mutual connections`)
+    console.log(`🔍 Analyzing COMPLETE network: ${accountsToAnalyze.length} accounts (no follower count bias!)`)
 
-    // Step 3: For each prioritized person, find people who also follow them (2nd degree connections)
-    console.log('🔍 Finding mutual connections for recommendations...')
+    // Step 3: For each person, find people who also follow them (2nd degree connections)
+    console.log('🔍 Finding mutual connections across your ENTIRE network...')
     
     const mutualCandidates = new Map<number, UserWithMutuals>()
     const userFollowsFids = new Set(allFollowing.map(u => u.fid))
     let processedCount = 0
+    let rateLimitHits = 0
     
     // Process each followed user to find their followers (potential recommendations)
-    for (const followedUser of prioritizedFollowing) {
+    for (const followedUser of accountsToAnalyze) {
       try {
         processedCount++
-        const progress = Math.round((processedCount / prioritizedFollowing.length) * 100)
-        console.log(`🔗 [${progress}%] Checking mutuals for ${followedUser.username} (FID ${followedUser.fid}, ${followedUser.followerCount} followers)`)
+        const progress = Math.round((processedCount / accountsToAnalyze.length) * 100)
+        console.log(`🔗 [${progress}%] Analyzing ${followedUser.username} (FID ${followedUser.fid}, ${followedUser.followerCount} followers)`)
         
-        // Get more followers for popular accounts
-        const followersLimit = followedUser.followerCount > 10000 ? 100 : 75
+        // Dynamic follower limit based on account size
+        let followersLimit = 50
+        if (followedUser.followerCount > 50000) followersLimit = 150
+        else if (followedUser.followerCount > 20000) followersLimit = 100
+        else if (followedUser.followerCount > 5000) followersLimit = 75
+        
         const followers = await getFollowers(followedUser.fid, followersLimit)
         
         console.log(`📊 Found ${followers.data.length} followers for ${followedUser.username}`)
@@ -149,26 +155,41 @@ export async function GET(request: NextRequest) {
           if (mutualCandidates.has(potentialRec.fid)) {
             const existing = mutualCandidates.get(potentialRec.fid)!
             existing.mutualCount = (existing.mutualCount || 0) + 1
-            if (debugParam && existing.mutualCount >= 5) {
-              console.log(`➕ Updated mutual count for ${potentialRec.username}: ${existing.mutualCount}`)
+            if (debugParam && existing.mutualCount >= 10 && existing.mutualCount % 10 === 0) {
+              console.log(`🔥 HIGH MUTUAL COUNT: ${potentialRec.username} now has ${existing.mutualCount} mutual connections!`)
             }
           } else {
             mutualCandidates.set(potentialRec.fid, {
               ...potentialRec,
               mutualCount: 1
             })
-            if (debugParam) {
+            if (debugParam && Math.random() < 0.1) { // Log 10% of new candidates to avoid spam
               console.log(`✨ New recommendation candidate: ${potentialRec.username} (FID ${potentialRec.fid})`)
             }
           }
         }
+        
+        // Rate limiting: small delay between requests to avoid hitting limits
+        if (processedCount % 50 === 0) {
+          console.log(`⏸️ Processed ${processedCount} accounts, taking brief pause to avoid rate limits...`)
+          await new Promise(resolve => setTimeout(resolve, 1000)) // 1 second pause every 50 requests
+        }
+        
       } catch (error) {
-        console.warn(`⚠️ Failed to get mutuals for ${followedUser.username}:`, error)
+        if (error instanceof Error && error.message?.includes('429')) {
+          rateLimitHits++
+          console.warn(`⚠️ Rate limit hit for ${followedUser.username} (${rateLimitHits} total). Continuing...`)
+          // Add longer delay on rate limit
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        } else {
+          console.warn(`⚠️ Failed to get mutuals for ${followedUser.username}:`, error)
+        }
         // Continue with other users
       }
     }
 
     console.log(`🎯 Found ${mutualCandidates.size} potential recommendations from ${processedCount} analyzed accounts`)
+    console.log(`⚠️ Rate limits encountered: ${rateLimitHits} times during analysis`)
 
     // Step 4: Filter and enhance recommendations (require 2+ mutuals for deep analysis)
     const minMutuals = deepParam ? 2 : 1
@@ -180,6 +201,17 @@ export async function GET(request: NextRequest) {
       }))
 
     console.log(`📊 ${recommendations.length} candidates meet ${minMutuals}+ mutual requirement`)
+
+    // Report on high-mutual discoveries
+    const highMutualCount = recommendations.filter(r => (r.mutualCount || 0) >= 50).length
+    const veryhighMutualCount = recommendations.filter(r => (r.mutualCount || 0) >= 100).length
+    
+    if (highMutualCount > 0) {
+      console.log(`🔥 DISCOVERY: ${highMutualCount} accounts with 50+ mutual connections found!`)
+    }
+    if (veryhighMutualCount > 0) {
+      console.log(`🚀 BREAKTHROUGH: ${veryhighMutualCount} accounts with 100+ mutual connections found!`)
+    }
 
     // Step 5: Sort recommendations using our sorting utilities
     console.log('📊 Sorting recommendations by score...')

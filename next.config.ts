@@ -14,7 +14,8 @@ const nextConfig: NextConfig = {
       'ipfs.io',
       'media.firefly.land',
       'ipfs.decentralized-content.com',
-      'nft.orivium.io'
+      'nft.orivium.io',
+      'takocdn.xyz'
     ],
     remotePatterns: [
       {
@@ -86,6 +87,50 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'nft.orivium.io',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'takocdn.xyz',
+        port: '',
+        pathname: '/**',
+      },
+      // More permissive patterns for common CDN/image services
+      {
+        protocol: 'https',
+        hostname: '**.cdninstagram.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.cloudfront.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.pinata.cloud',
+        port: '',
+        pathname: '/**',
+      },
+      // Wildcard for any subdomain of common image hosts
+      {
+        protocol: 'https',
+        hostname: '**.imgur.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.googleusercontent.com',
         port: '',
         pathname: '/**',
       },

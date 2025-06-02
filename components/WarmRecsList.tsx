@@ -19,6 +19,8 @@ function RecommendationCard({
   recommendation: UserWithMutuals
   onFollowUser?: (fid: number) => void
 }) {
+  const [imageError, setImageError] = React.useState(false)
+  
   const { 
     fid, 
     username, 
@@ -35,13 +37,18 @@ function RecommendationCard({
     <div className="rec-card">
       <div className="rec-header">
         <div className="rec-avatar">
-          {pfpUrl ? (
+          {pfpUrl && !imageError ? (
             <Image 
               src={pfpUrl} 
               alt={`${displayName} avatar`}
               width={48}
               height={48}
               className="avatar-img"
+              onError={(e) => {
+                console.warn(`Failed to load image for ${displayName}: ${pfpUrl}`)
+                setImageError(true)
+              }}
+              unoptimized={imageError} // Fallback for problematic domains
             />
           ) : (
             <div className="avatar-placeholder">
