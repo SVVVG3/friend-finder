@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import WarmRecsList from '../../../components/WarmRecsList'
-import { UserWithMutuals } from '../../../utils/sort'
 import { 
   NetworkAnalysisLoader, 
   CRTErrorState, 
