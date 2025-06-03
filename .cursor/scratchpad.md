@@ -19,6 +19,59 @@ User feedback indicates the app needs significant mobile UX improvements. Analys
 - Follow CRT theme design (green text, black background)
 - **CRITICAL**: Mobile optimization gaps identified requiring immediate attention
 
+### Critical Farcaster Embed Validation Issues FIXED ✅
+
+**ISSUE DISCOVERED**: Farcaster validation tool showed both embed and manifest as invalid despite being deployed.
+
+**ROOT CAUSES IDENTIFIED & FIXED**:
+
+1. **❌ Manifest Configuration Issues**:
+   - Missing required `imageUrl` property in `/.well-known/farcaster.json`
+   - Missing required `buttonTitle` property in manifest
+   - **✅ FIXED**: Added both required fields to manifest
+
+2. **❌ Embed Meta Tag Issues**:
+   - Had conflicting old Farcaster frame meta tags alongside new Mini App embed format
+   - Old `fc:frame` tags using deprecated format (vNext, separate properties)
+   - **✅ FIXED**: Removed old conflicting tags, kept only proper Mini App embed format
+
+**TECHNICAL FIXES APPLIED**:
+
+**Updated `/.well-known/farcaster.json`**:
+```json
+{
+  "frame": {
+    "version": "1",
+    "name": "Friend Finder",
+    "iconUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
+    "homeUrl": "https://farcaster-friend-finder.vercel.app",
+    "imageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
+    "buttonTitle": "🔍 Analyze Network",
+    "splashImageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
+    "splashBackgroundColor": "#000000"
+  }
+}
+```
+
+**Fixed Embed Meta Tags in `layout.tsx`**:
+- ✅ Kept proper `fc:frame` meta tag in `metadata.other` with correct JSON structure
+- ✅ Removed conflicting old frame meta tags from `<head>`
+- ✅ Maintained Open Graph and Twitter Card meta tags for broader social sharing
+
+**COMPLIANCE STATUS**:
+- ✅ Embed format: Uses `version: "next"` with proper button/action structure
+- ✅ Image requirements: 3:2 aspect ratio embed image exists
+- ✅ Splash requirements: 200x200px splash image exists  
+- ✅ URL structure: All URLs properly formed and accessible
+- ✅ Manifest structure: All required fields present
+
+**DEPLOYMENT STATUS**: 
+- ✅ Changes committed and pushed to GitHub
+- ✅ Vercel deployment triggered
+- 🔄 Awaiting validation tool re-check
+
+This fix ensures the Mini App will properly embed in Farcaster feeds and validate correctly in the Farcaster development tools.
+
 ### Mobile Optimization Analysis
 
 **Current Issues Identified:**

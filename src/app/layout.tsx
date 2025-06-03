@@ -4,6 +4,8 @@ import "./globals.css";
 import Nav from "../../components/Nav";
 import { CacheProvider } from "../components/CacheProvider";
 import { FrameProvider } from "../components/FrameProvider";
+import { AnalysisProvider } from "../components/AnalysisProvider";
+import { BackgroundAnalysisIndicator } from "../components/BackgroundAnalysisIndicator";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -103,10 +105,13 @@ export default function RootLayout({
       >
         <FrameProvider>
           <CacheProvider>
-            <main className="min-h-screen w-full overflow-x-hidden">
-              {children}
-            </main>
-            <Nav />
+            <AnalysisProvider>
+              <BackgroundAnalysisIndicator />
+              <main className="min-h-screen w-full overflow-x-hidden">
+                {children}
+              </main>
+              <Nav />
+            </AnalysisProvider>
           </CacheProvider>
         </FrameProvider>
       </body>

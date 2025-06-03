@@ -10,6 +10,7 @@ import {
 } from '../../../components/LoadingStates'
 import { useCache } from '../../components/CacheProvider'
 import { useFrame } from '../../components/FrameProvider'
+import { useBackgroundAnalysis } from '../../components/BackgroundAnalysisIndicator'
 
 interface FarcasterUser {
   fid: number
@@ -108,285 +109,122 @@ function OneWayInCard({
 }
 
 export default function OneWayInPage() {
-  const [oneWayIn, setOneWayIn] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [analysisStats, setAnalysisStats] = useState<{
-    totalFollowing: number
-    totalFollowers: number
-    oneWayInCount: number
-  } | null>(null)
-  const [loadingStage, setLoadingStage] = useState('Initializing...')
 
-  // Get cache functions and frame state
-  const cache = useCache()
-  const { isFrameReady, userFid } = useFrame()
+  // Get frame state and background analysis data
+  const { isFrameReady } = useFrame()
+  const { isAnalyzing, isComplete, error: analysisError, data } = useBackgroundAnalysis()
 
-  // Calculate one-way IN relationships only
-  const calculateOneWayIn = React.useCallback((
-    following: FarcasterUser[], 
-    followers: FarcasterUser[]
-  ) => {
-    const followingFids = new Set(following.map(u => u.fid))
-    // One-way in: People who follow you but you don't follow back
-    const oneWayInUsers = followers.filter(user => !followingFids.has(user.fid))
-    
-    // Sort by follower count (highest first) to show most influential accounts at top
-    return oneWayInUsers.sort((a, b) => b.followerCount - a.followerCount)
-  }, [])
+  // Use background analysis data
+  const oneWayIn = data.oneWayIn
+  const analysisStats = data.analysisStats
 
-  // Check cache and load cached data if available
-  const loadFromCacheIfValid = React.useCallback(() => {
-    if (cache.isCacheValid() && (cache.userFid === userFid || !cache.userFid)) {
-      console.log('🔄 Loading from cache - valid data found')
-      
-      // Use cached data
-      setOneWayIn(cache.oneWayIn)
-      setAnalysisStats({
-        totalFollowing: cache.analysisStats?.totalFollowing || 0,
-        totalFollowers: cache.analysisStats?.totalFollowers || 0,
-        oneWayInCount: cache.oneWayIn.length
-      })
-      
-      return true // Cache was used
-    }
-    return false // No valid cache
-  }, [cache, userFid])
-
-  // Analyze one-way IN relationships
-  const analyzeOneWayIn = React.useCallback(async (fid: string) => {
-    if (!fid || fid.trim() === '') {
-      console.log('⚠️ No FID provided, skipping analysis')
-      return
-    }
-
-    // Check cache first
-    if (loadFromCacheIfValid()) {
-      return
-    }
-    
-    setLoading(true)
-    setError(null)
-    setLoadingStage('Initializing analysis...')
-    
-    try {
-      console.log(`🔍 Starting one-way IN analysis for FID: ${fid}`)
-      
-      setLoadingStage('Fetching your network data...')
-      
-      // Fetch both followers and following
-      const [followersResponse, followingResponse] = await Promise.all([
-        fetch(`/api/followers?fid=${fid}`),
-        fetch(`/api/following?fid=${fid}`)
-      ])
-
-      if (!followersResponse.ok || !followingResponse.ok) {
-        throw new Error('Failed to fetch network data')
-      }
-
-      const followersData = await followersResponse.json()
-      const followingData = await followingResponse.json()
-
-      if (!followersData.success || !followingData.success) {
-        throw new Error('Invalid response from API')
-      }
-
-      const followers: FarcasterUser[] = followersData.followers || []
-      const following: FarcasterUser[] = followingData.following || []
-
-      console.log(`📊 Fetched ${following.length} following, ${followers.length} followers`)
-
-      setLoadingStage('Analyzing one-way relationships...')
-      
-      // Calculate one-way IN (people who follow you but you don't follow back)
-      const oneWayInResults = calculateOneWayIn(following, followers)
-      
-      console.log(`🔄 One-way IN analysis results: ${oneWayInResults.length} accounts`)
-      
-      setOneWayIn(oneWayInResults)
-      setAnalysisStats({
-        totalFollowing: following.length,
-        totalFollowers: followers.length,
-        oneWayInCount: oneWayInResults.length
-      })
-
-      // Also calculate one-way OUT for complete cache data
-      const followerFids = new Set(followers.map(u => u.fid))
-      const oneWayOutResults = following.filter(user => !followerFids.has(user.fid))
-        // Sort by follower count (highest first) for consistency
-        .sort((a, b) => b.followerCount - a.followerCount)
-
-      // Store in cache for future navigation
-      cache.setCache({
-        userFid: fid,
-        followers,
-        following,
-        oneWayIn: oneWayInResults,
-        oneWayOut: oneWayOutResults,
-        analysisStats: {
-          totalFollowing: following.length,
-          totalFollowers: followers.length,
-          oneWayInCount: oneWayInResults.length,
-          oneWayOutCount: oneWayOutResults.length
-        }
-      })
-      console.log('💾 Data cached for future navigation')
-
-    } catch (err) {
-      console.error('❌ Error during one-way IN analysis:', err)
-      setError(err instanceof Error ? err.message : 'Analysis failed')
-      setOneWayIn([])
-      setAnalysisStats(null)
-    } finally {
-      setLoading(false)
-      setLoadingStage('Initializing...')
-    }
-  }, [calculateOneWayIn, cache, loadFromCacheIfValid])
-
-  // Load data when frame is ready and we have a user FID
-  useEffect(() => {
-    if (!isFrameReady) {
-      console.log('📊 Loading data (frame ready handled by home page)...')
-      return
-    }
-
-    if (userFid && userFid.trim() !== '') {
-      console.log(`🔍 Using current user's FID: ${userFid}`)
-      
-      // Try cache first, then fetch if needed
-      if (!loadFromCacheIfValid()) {
-        analyzeOneWayIn(userFid)
-      }
-    }
-  }, [isFrameReady, userFid, analyzeOneWayIn, loadFromCacheIfValid])
-
+  // Follow user handler (placeholder)
   const handleFollowUser = async (fid: number) => {
-    // TODO: Implement follow functionality using Farcaster actions
-    console.log(`Following user with FID: ${fid}`)
+    alert(`Follow user with FID: ${fid}`)
   }
 
-  const handleRetry = () => {
-    if (userFid) {
-      // Clear cache and retry
-      cache.setCache({ lastAnalyzed: 0 })
-      analyzeOneWayIn(userFid)
-    }
-  }
-
-  // Show loading if frame is not ready
-  if (!isFrameReady) {
+  // Show loading state while frame is initializing or analysis is running
+  if (!isFrameReady || isAnalyzing) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <NetworkAnalysisLoader 
-          stage="Initializing Farcaster frame..."
-          progress={0}
+          stage={isAnalyzing ? "Running background analysis..." : "Initializing..."} 
         />
       </div>
     )
   }
 
+  // Show error state
+  if (analysisError) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <CRTErrorState 
+          message={analysisError}
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    )
+  }
+
+  // Show empty state if no data
+  if (isComplete && oneWayIn.length === 0) {
+    return (
+      <div className="min-h-screen bg-black p-4">
+        <div className="max-w-4xl mx-auto pt-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
+              📨 One-Way Followers
+            </h1>
+            <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
+              People who follow you but you don't follow back
+            </p>
+          </div>
+          
+          <CRTEmptyState 
+            title="No one-way followers found!"
+            message="You follow back everyone who follows you. Great job staying connected!"
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
-      <div className="max-w-4xl mx-auto w-full">
+    <div className="min-h-screen bg-black p-4">
+      <div className="max-w-4xl mx-auto pt-8">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
-            🔍 FRIEND FINDER
+        <div className="text-center mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
+            📨 One-Way Followers
           </h1>
-          <h2 className="text-xl sm:text-2xl font-bold mb-2 text-green-300 crt-text-glow">
-            ← People Who Follow You
-          </h2>
-          <p className="text-green-300 text-base sm:text-lg">
-            But you don&apos;t follow back
+          <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
+            People who follow you but you don't follow back
           </p>
-          <p className="text-green-600 text-xs sm:text-sm mt-2 italic px-2">
-            📊 Automatically analyzing your complete network
-          </p>
-          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
 
-        {/* Analysis Stats - Mobile Responsive */}
-        {analysisStats && !loading && (
-          <div className="mb-6 p-3 sm:p-4 bg-gray-900 border border-green-600 rounded-lg mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow">
-            <h3 className="text-green-400 font-bold mb-3 text-center sm:text-left text-sm sm:text-base crt-text-glow">📊 Analysis Results</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm w-full">
-              <div className="text-center sm:text-left">
-                <span className="text-green-600 block sm:inline">You Follow:</span>
-                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.totalFollowing.toLocaleString()}</div>
+        {/* Analysis Stats */}
+        {analysisStats && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-black border border-green-400 rounded-lg p-4 text-center crt-glow">
+              <div className="text-green-400 font-bold text-lg crt-text-glow">
+                {analysisStats.totalFollowers?.toLocaleString() || 0}
               </div>
-              <div className="text-center sm:text-left">
-                <span className="text-green-600 block sm:inline">Follow You:</span>
-                <div className="text-green-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.totalFollowers.toLocaleString()}</div>
+              <div className="text-green-300 text-sm font-mono">Total Followers</div>
+            </div>
+            <div className="bg-black border border-green-400 rounded-lg p-4 text-center crt-glow">
+              <div className="text-green-400 font-bold text-lg crt-text-glow">
+                {analysisStats.totalFollowing?.toLocaleString() || 0}
               </div>
-              <div className="text-center sm:text-left">
-                <span className="text-blue-400 block sm:inline">One-Way In:</span>
-                <div className="text-blue-400 font-bold text-lg sm:text-base crt-text-glow">{analysisStats.oneWayInCount.toLocaleString()}</div>
+              <div className="text-green-300 text-sm font-mono">Total Following</div>
+            </div>
+            <div className="bg-black border border-blue-400 rounded-lg p-4 text-center crt-glow">
+              <div className="text-blue-400 font-bold text-lg crt-text-glow">
+                {oneWayIn.length.toLocaleString()}
               </div>
+              <div className="text-blue-300 text-sm font-mono">One-Way Followers</div>
             </div>
           </div>
         )}
 
-        {/* Enhanced Loading State */}
-        {loading && (
-          <div className="mb-6">
-            <NetworkAnalysisLoader
-              stage={loadingStage}
-              progress={0}
-              className="mb-4"
+        {/* Results List */}
+        <div className="space-y-3">
+          {oneWayIn.map((user) => (
+            <OneWayInCard 
+              key={user.fid} 
+              user={user} 
+              onFollowUser={handleFollowUser}
             />
-            
-            {/* Show skeleton cards while loading */}
-            <CRTCardSkeleton count={3} />
-          </div>
-        )}
+          ))}
+        </div>
 
-        {/* Enhanced Error State */}
-        {error && !loading && (
-          <CRTErrorState
-            title="Analysis Failed"
-            message={error}
-            onRetry={handleRetry}
-            retryLabel="Try Again"
-            className="mb-6"
-          />
-        )}
-
-        {/* Results - Mobile Optimized */}
-        {!loading && !error && oneWayIn.length > 0 && (
-          <>
-            <div className="mb-4 text-center px-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-2 crt-text-glow">
-                🌟 {oneWayIn.length} accounts who follow you but you don&apos;t follow back
-              </h2>
-              <p className="text-green-600 text-sm sm:text-base leading-relaxed">
-                Great opportunities to grow your network with interested followers
-              </p>
-              <p className="text-green-500 text-xs sm:text-sm mt-1">
-                📊 Sorted by follower count (most influential first)
-              </p>
-            </div>
-            
-            <div className="space-y-0">
-              {oneWayIn.map((user) => (
-                <OneWayInCard
-                  key={user.fid}
-                  user={user}
-                  onFollowUser={handleFollowUser}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Enhanced Empty State */}
-        {!loading && !error && oneWayIn.length === 0 && analysisStats && (
-          <CRTEmptyState
-            icon="✨"
-            title="No One-Way Followers Found"
-            message="No potential follows found. You&apos;re following everyone back!"
-            className="mb-6"
-          />
-        )}
+        {/* Results Summary */}
+        <div className="mt-6 p-4 bg-green-400/5 border border-green-400 rounded-lg text-center crt-glow">
+          <p className="text-green-400 font-mono text-sm">
+            Found {oneWayIn.length} people who follow you but you don't follow back
+          </p>
+        </div>
       </div>
     </div>
   )
