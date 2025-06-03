@@ -358,16 +358,16 @@ export function OnboardingAnalysisLoader({
       {/* Value Proposition */}
       <div className="mb-8 text-left bg-gray-900/50 border border-green-600/50 rounded-lg p-4">
         <h3 className="text-green-400 font-bold text-lg mb-3 text-center crt-text-glow">
-          🚀 What you'll discover:
+          🚀 What you&apos;ll discover:
         </h3>
         <div className="space-y-2 text-green-300 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-blue-400">📨</span>
-            <span>People who follow you but you don't follow back</span>
+            <span>People who follow you but you don&apos;t follow back</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-orange-400">📤</span>
-            <span>People you follow who don't follow you back</span>
+            <span>People you follow who don&apos;t follow you back</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-green-400">🌟</span>
@@ -409,7 +409,7 @@ export function OnboardingAnalysisLoader({
 
       {/* Expectation Setting */}
       <div className="text-green-600 text-xs font-mono mt-4 bg-green-400/5 p-3 rounded border border-green-600/30">
-        💡 We're scanning your Farcaster network to find hidden connection opportunities and optimize your follow strategy
+        💡 We&apos;re scanning your Farcaster network to find hidden connection opportunities and optimize your follow strategy
       </div>
     </div>
   )
