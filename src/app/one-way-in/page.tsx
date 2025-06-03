@@ -210,16 +210,22 @@ export default function OneWayInPage() {
         oneWayInCount: oneWayInResults.length
       })
 
+      // Also calculate one-way OUT for complete cache data
+      const followerFids = new Set(followers.map(u => u.fid))
+      const oneWayOutResults = following.filter(user => !followerFids.has(user.fid))
+
       // Store in cache for future navigation
       cache.setCache({
         userFid: fid,
         followers,
         following,
         oneWayIn: oneWayInResults,
+        oneWayOut: oneWayOutResults,
         analysisStats: {
           totalFollowing: following.length,
           totalFollowers: followers.length,
-          oneWayInCount: oneWayInResults.length
+          oneWayInCount: oneWayInResults.length,
+          oneWayOutCount: oneWayOutResults.length
         }
       })
       console.log('💾 Data cached for future navigation')
