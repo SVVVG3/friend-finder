@@ -709,3 +709,88 @@ User reported that pages were making new API calls when clicking back to them, i
 Creating cache infrastructure is only half the battle - pages must actually USE the cache with proper cache-first loading patterns.
 
 ---
+
+### 🔧 FRAME MANAGEMENT CENTRALIZATION FIX (Jan 3, 2025)
+
+**✅ MAJOR ARCHITECTURE FIX: Centralized Frame Ready Management**
+
+**Problem:** Multiple frame ready calls causing cache conflicts and race conditions:
+- Each page independently calling `sdk.actions.ready()`
+- Home page calling ready, then each destination page calling ready again
+- Cache showing "expired or no FID" multiple times
+- Logs showing duplicate frame initialization across navigation
+
+**Root Cause Analysis:**
+```javascript
+// BEFORE: Multiple pages calling frame ready independently
+// Home page: sdk.actions.ready() → redirect to /one-way-in
+// one-way-in page: sdk.actions.ready() → analysis
+// one-way-out page: sdk.actions.ready() → analysis  
+// warm-recs page: sdk.actions.ready() → analysis
+// Result: 4+ frame ready calls, cache invalidation, race conditions
+```
+
+**Solution: Centralized FrameProvider Architecture**
+
+1. **Created FrameProvider component** (`src/components/FrameProvider.tsx`):
+```typescript
+'use client'
+export function FrameProvider({ children }: { children: ReactNode }) {
+  const [isFrameReady, setIsFrameReady] = useState(false)
+  const [userFid, setUserFid] = useState('')
+  
+  useEffect(() => {
+    let hasCalledReady = false
+    const initializeFrame = async () => {
+      if (hasCalledReady) return // Prevent duplicates
+      hasCalledReady = true
+      await sdk.actions.ready() // Single call
+      const context = await sdk.context
+      setUserFid(context.user.fid.toString())
+      setIsFrameReady(true)
+    }
+    initializeFrame()
+  }, [])
+}
+```
+
+2. **Updated Layout hierarchy**:
+```typescript
+<FrameProvider>
+  <CacheProvider>
+    {children}
+  </CacheProvider>
+</FrameProvider>
+```
+
+3. **Refactored all pages** to use centralized state:
+```typescript
+// NEW: Pages use global frame state
+const { isFrameReady, userFid } = useFrame()
+
+// Wait for frame ready before loading data
+useEffect(() => {
+  if (!isFrameReady) return
+  if (userFid) analyzeNetwork(userFid)
+}, [isFrameReady, userFid])
+```
+
+**Benefits:**
+- ✅ **Single frame ready call** - Only called once per app lifecycle
+- ✅ **Shared user FID** - No duplication of SDK context calls
+- ✅ **Consistent cache** - No more cache invalidation from frame resets
+- ✅ **Race condition elimination** - Deterministic initialization order
+- ✅ **Cleaner logs** - No more duplicate initialization messages
+
+**Status:** 
+- ✅ **Deployed and ready for testing**
+- ✅ **All pages updated** (home, one-way-in, one-way-out, warm-recs)
+- ✅ **Backwards compatible** - Cache functionality preserved
+- 🎯 **Expected result**: Clean logs with single frame initialization
+
+**Key Architecture Lesson:**
+- Global app state (frame ready, user FID) belongs in providers, not individual pages
+- Prevents race conditions and duplicate API calls during navigation
+- Essential for Farcaster Mini Apps with multi-page navigation
+
+---

@@ -41,7 +41,7 @@ export default function Home() {
 
   // Check cache and load cached data if available
   const loadFromCacheIfValid = React.useCallback(() => {
-    if (cache.isCacheValid() && cache.userFid === userFid) {
+    if (cache.isCacheValid() && (cache.userFid === userFid || !cache.userFid)) {
       console.log('🔄 Loading warm recs from cache - valid data found')
       
       // Use cached data
