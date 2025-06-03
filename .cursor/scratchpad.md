@@ -282,6 +282,33 @@ git push -u origin main
 
 ## Executor's Feedback or Assistance Requests
 
+### 🧪 TESTING HYPOTHESIS: Original Multi-Page Architecture (Jan 3, 2025)
+
+**After fixing the iframe embedding issue, we're now testing whether the original cleaner multi-page setup works:**
+
+**Hypothesis:**
+- ✅ **Iframe headers were the real blocker** (X-Frame-Options: sameorigin)
+- ❓ **Single-page requirement might have been wrong assumption**
+- 🎯 **Original architecture was much cleaner and better UX**
+
+**Reverting to Test:**
+- **`/`** → Home page with `sdk.actions.ready()` + redirect to `/one-way-in`
+- **`/one-way-in`** → Dedicated one-way followers analysis page
+- **`/one-way-out`** → Dedicated one-way following analysis page  
+- **`/warm-recs`** → Dedicated warm recommendations page
+- **Bottom navigation** between pages
+
+**Benefits of Original Setup:**
+- ✅ Each feature gets proper breathing room and dedicated space
+- ✅ Better UX with specialized pages instead of cramped single page
+- ✅ Clean navigation pattern familiar to users
+- ✅ Better mobile experience with focused interfaces
+- ✅ Professional app feel vs. cramped single page
+
+**Test Results:** *Pending deployment and testing in Mini App environment*
+
+If this works, we can delete the ugly single-page version and return to the elegant multi-page architecture!
+
 ### 🎯 CRITICAL BREAKTHROUGH: X-Frame-Options Header Issue (Jan 3, 2025) 
 
 **🔍 ROOT CAUSE FINALLY IDENTIFIED!**
