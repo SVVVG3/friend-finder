@@ -616,3 +616,96 @@ Based on [Neynar's SIWN documentation](https://docs.neynar.com/docs/how-to-let-u
 ---
 
 ### 🗂️ CACHING ISSUE: Re-running Analysis on Tab Switches (Jan 3, 2025) 
+
+**✅ MAJOR CACHING ISSUE RESOLVED**
+
+**Problem Identified:**
+User reported that pages were making new API calls when clicking back to them, indicating the cache wasn't working. Console logs showed:
+- Home page redirects to one-way-in → Analysis runs
+- User switches to one-way-out → Analysis runs  
+- User switches back to one-way-in → **Analysis runs AGAIN** (should use cache)
+
+**Root Cause:**
+- Cache infrastructure was created but **pages weren't actually using it**
+- All pages were still making direct API calls without checking cache first
+- No cache storage after successful API responses
+- Cache context was available but unused by page components
+
+**Solution Implemented:**
+
+1. **Added cache imports to all pages**
+   ```typescript
+   import { useCache } from '../../components/CacheProvider'
+   const cache = useCache()
+   ```
+
+2. **Implemented cache-first loading pattern**
+   ```typescript
+   const loadFromCacheIfValid = useCallback(() => {
+     if (cache.isCacheValid() && cache.userFid === userFid) {
+       console.log('🔄 Loading from cache - valid data found')
+       // Use cached data instead of API call
+       setOneWayIn(cache.oneWayIn)
+       setAnalysisStats(cache.analysisStats)
+       return true // Cache was used
+     }
+     return false // No valid cache
+   }, [cache, userFid])
+   ```
+
+3. **Cache data after successful API calls**
+   ```typescript
+   // Store in cache after analysis
+   cache.setCache({
+     userFid: fid,
+     followers: followersData.followers,
+     following: followingData.following,
+     oneWayIn: oneWayInUsers,
+     analysisStats: { /* stats */ }
+   })
+   ```
+
+4. **Updated page load logic**
+   ```typescript
+   useEffect(() => {
+     if (userFid && userFid.trim() !== '') {
+       // Try cache first, then analyze if needed
+       if (!loadFromCacheIfValid()) {
+         analyzeOneWayIn(userFid)
+       }
+     }
+   }, [userFid, analyzeOneWayIn, loadFromCacheIfValid])
+   ```
+
+**Pages Updated:**
+- ✅ **one-way-in/page.tsx** - Full cache implementation
+- ✅ **one-way-out/page.tsx** - Full cache implementation  
+- ✅ **warm-recs/page.tsx** - Basic cache implementation
+
+**Additional Cleanup:**
+- ✅ **Removed unused LoadingButton imports** from all pages
+- ✅ **Removed manual FID input forms** (auto-detection works)
+- ✅ **Fixed TypeScript interface conflicts** (pfpUrl optional)
+- ✅ **Consistent string FID handling** across all pages
+
+**Cache Behavior:**
+- **5-minute cache expiration** - Fresh data without excessive API calls
+- **User-specific caching** - Cache tied to specific FID
+- **Shared data across pages** - One analysis serves all views
+- **Automatic invalidation** - Cache expires and refreshes as needed
+
+**Expected Result:**
+- 🎯 **First visit:** API calls run, data cached
+- 🔄 **Tab switches:** Instant loading from cache (5 min window)
+- ⏰ **After 5 minutes:** Fresh API calls, new cache
+- 📱 **Better UX:** No more repeated loading when navigating
+
+**Status:**
+- ✅ **Deployed and ready for testing**
+- ✅ **Console logs should show cache hits:** `🔄 Loading from cache - valid data found`
+- ✅ **No more repeated API calls** within 5-minute windows
+
+**Key Lesson:**
+Creating cache infrastructure is only half the battle - pages must actually USE the cache with proper cache-first loading patterns.
+
+---

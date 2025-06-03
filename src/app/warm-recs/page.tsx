@@ -123,6 +123,20 @@ export default function Home() {
         setAnalysisStats(data.debug)
         setIsDeepAnalysis(deep)
         
+        // Store warm recommendations in cache
+        if (data.recommendations && data.recommendations.length > 0) {
+          cache.setCache({
+            userFid: fid.toString(),
+            warmRecs: data.recommendations,
+            analysisStats: {
+              totalFollowing: data.debug?.totalFollowing || 0,
+              totalFollowers: 0, // Not available from this API
+              warmRecsCount: data.recommendations.length
+            }
+          })
+          console.log('💾 Warm recommendations cached for future navigation')
+        }
+        
         // Frame ready is now called immediately on mount, not here
       } else {
         throw new Error(data.message || 'Failed to get recommendations')
@@ -136,7 +150,7 @@ export default function Home() {
       setLoadingProgress(0)
       setLoadingStage('Initializing...')
     }
-  }, [])
+  }, [cache])
 
   // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
@@ -172,8 +186,16 @@ export default function Home() {
     }
     
     console.log('📊 Frame is ready, now loading data...')
-    fetchRecommendations(parseInt(userFid) || 0)
-  }, [frameReady, userFid, fetchRecommendations]) // Only run after frameReady is true
+    
+    // Try cache first, then fetch if needed
+    if (userFid && userFid.trim() !== '') {
+      if (!loadFromCacheIfValid()) {
+        fetchRecommendations(parseInt(userFid) || 0)
+      }
+    } else {
+      fetchRecommendations(parseInt(userFid) || 0)
+    }
+  }, [frameReady, userFid, fetchRecommendations, loadFromCacheIfValid]) // Only run after frameReady is true
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFid = e.target.value
