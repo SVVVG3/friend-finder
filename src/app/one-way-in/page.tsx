@@ -234,20 +234,6 @@ export default function OneWayInPage() {
     alert(`Follow functionality would be implemented here for FID: ${fid}`)
   }
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (userFid.trim()) {
-      analyzeOneWayIn(userFid.trim())
-    }
-  }
-
-  const handleRetry = () => {
-    if (userFid.trim()) {
-      analyzeOneWayIn(userFid.trim())
-    }
-  }
-
   // 🚀 Frame ready is now handled by home page - removed duplicate ready() call
   // Auto-load data on mount since frame ready was called by home page
   useEffect(() => {
@@ -272,42 +258,10 @@ export default function OneWayInPage() {
             But you don&apos;t follow back
           </p>
           <p className="text-green-600 text-xs sm:text-sm mt-2 italic px-2">
-            📊 Fetches ALL followers and following for complete analysis
+            📊 Automatically analyzing your complete network
           </p>
           <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
-
-        {/* Input Form - Mobile Optimized */}
-        <form onSubmit={handleSubmit} className="mb-6 w-full">
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 px-2 w-full">
-            <label htmlFor="fid" className="text-green-300 text-sm sm:text-base text-center sm:text-left shrink-0">
-              Enter Farcaster FID:
-            </label>
-            <div className="flex gap-2 w-full max-w-sm sm:max-w-none sm:w-auto">
-              <input
-                id="fid"
-                type="number"
-                value={userFid}
-                onChange={(e) => setUserFid(e.target.value)}
-                placeholder="e.g. 3621"
-                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
-                disabled={loading}
-                min="1"
-                required
-                inputMode="numeric"
-                pattern="[0-9]*"
-              />
-              <LoadingButton 
-                type="submit" 
-                loading={loading}
-                disabled={loading || !userFid.trim()}
-                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
-              >
-                Analyze
-              </LoadingButton>
-            </div>
-          </div>
-        </form>
 
         {/* Analysis Stats - Mobile Responsive */}
         {analysisStats && !loading && (
@@ -349,7 +303,7 @@ export default function OneWayInPage() {
           <CRTErrorState
             title="Analysis Failed"
             message={error}
-            onRetry={handleRetry}
+            onRetry={() => analyzeOneWayIn(userFid)}
             retryLabel="Try Again"
             className="mb-6"
           />
