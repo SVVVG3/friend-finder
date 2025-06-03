@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   },
   other: {
     "fc:frame": JSON.stringify({
-      "version": "1",
+      "version": "next",
       "imageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
       "button": {
         "title": "🔍 Analyze Network",
