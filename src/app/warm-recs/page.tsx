@@ -13,7 +13,7 @@ import { useBackgroundAnalysis } from '../../components/BackgroundAnalysisIndica
 export default function Home() {
   // Get frame state and background analysis data
   const { isFrameReady, userFid } = useFrame()
-  const { isAnalyzing, isComplete, error: analysisError, data, startWarmRecsAnalysis } = useBackgroundAnalysis()
+  const { isAnalyzing, error: analysisError, data, startWarmRecsAnalysis } = useBackgroundAnalysis()
   
   // Track if warm recs analysis has been attempted
   const [warmRecsAttempted, setWarmRecsAttempted] = useState(false)
