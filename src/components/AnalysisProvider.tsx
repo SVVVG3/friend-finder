@@ -218,15 +218,44 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   const startWarmRecsAnalysis = useCallback(async (fid: string) => {
     console.log('🌟 Starting warm recommendations analysis for FID:', fid)
     
+    // Start with initial progress
     setAnalysisState({
       isAnalyzing: true,
       isComplete: false,
       error: null,
-      progress: { step: 'Analyzing warm connections...', current: 1, total: 1 }
+      progress: { step: 'Initializing warm connections analysis...', current: 0, total: 100 }
     })
+
+    // Create a progressive loading experience
+    const progressInterval = setInterval(() => {
+      setAnalysisState(prev => {
+        if (!prev.isAnalyzing || !prev.progress) return prev
+        
+        const newCurrent = Math.min(prev.progress.current + 1, 90) // Cap at 90% until complete
+        let step = 'Analyzing warm connections...'
+        
+        if (newCurrent < 30) {
+          step = 'Analyzing your network graph...'
+        } else if (newCurrent < 60) {
+          step = 'Finding mutual connections...'
+        } else if (newCurrent < 85) {
+          step = 'Calculating recommendation scores...'
+        } else {
+          step = 'Finalizing recommendations...'
+        }
+        
+        return {
+          ...prev,
+          progress: { ...prev.progress, step, current: newCurrent }
+        }
+      })
+    }, 2000) // Update every 2 seconds
 
     try {
       const response = await fetch(`/api/recs?fid=${fid}&limit=50&debug=true&deep=true`)
+      
+      // Clear the interval
+      clearInterval(progressInterval)
       
       if (!response.ok) {
         throw new Error(`Failed to fetch warm recommendations: ${response.status}`)
@@ -240,43 +269,55 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
       const warmRecs = data.recommendations || []
       
-      // Update analysis data with warm recs
-      setAnalysisData(prev => ({
-        ...prev,
-        warmRecs,
-        analysisStats: {
-          ...prev.analysisStats,
-          warmRecsCount: warmRecs.length,
-        } as AnalysisStats
-      }))
-
-      // Update cache with warm recs
-      cache.setCache({
-        userFid: fid,
-        followers: cache.followers,
-        following: cache.following,
-        oneWayIn: cache.oneWayIn,
-        oneWayOut: cache.oneWayOut,
-        warmRecs,
-        analysisStats: {
-          totalFollowing: cache.analysisStats?.totalFollowing || 0,
-          totalFollowers: cache.analysisStats?.totalFollowers || 0,
-          oneWayInCount: cache.analysisStats?.oneWayInCount || 0,
-          oneWayOutCount: cache.analysisStats?.oneWayOutCount || 0,
-          warmRecsCount: warmRecs.length
-        }
+      // Show completion
+      setAnalysisState({
+        isAnalyzing: true,
+        isComplete: false,
+        error: null,
+        progress: { step: 'Analysis complete!', current: 100, total: 100 }
       })
       
-      setAnalysisState({
-        isAnalyzing: false,
-        isComplete: true,
-        error: null,
-        progress: null
-      })
+      // Brief delay to show completion, then finish
+      setTimeout(() => {
+        // Update analysis data with warm recs
+        setAnalysisData(prev => ({
+          ...prev,
+          warmRecs,
+          analysisStats: {
+            ...prev.analysisStats,
+            warmRecsCount: warmRecs.length,
+          } as AnalysisStats
+        }))
 
-      console.log('✅ Warm recommendations analysis complete:', warmRecs.length)
+        // Update cache with warm recs
+        cache.setCache({
+          userFid: fid,
+          followers: cache.followers,
+          following: cache.following,
+          oneWayIn: cache.oneWayIn,
+          oneWayOut: cache.oneWayOut,
+          warmRecs,
+          analysisStats: {
+            totalFollowing: cache.analysisStats?.totalFollowing || 0,
+            totalFollowers: cache.analysisStats?.totalFollowers || 0,
+            oneWayInCount: cache.analysisStats?.oneWayInCount || 0,
+            oneWayOutCount: cache.analysisStats?.oneWayOutCount || 0,
+            warmRecsCount: warmRecs.length
+          }
+        })
+        
+        setAnalysisState({
+          isAnalyzing: false,
+          isComplete: true,
+          error: null,
+          progress: null
+        })
+
+        console.log('✅ Warm recommendations analysis complete:', warmRecs.length)
+      }, 500)
 
     } catch (error) {
+      clearInterval(progressInterval)
       console.error('❌ Warm recommendations analysis failed:', error)
       setAnalysisState({
         isAnalyzing: false,

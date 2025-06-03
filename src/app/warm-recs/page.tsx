@@ -9,11 +9,15 @@ import {
 } from '../../../components/LoadingStates'
 import { useFrame } from '../../components/FrameProvider'
 import { useBackgroundAnalysis } from '../../components/BackgroundAnalysisIndicator'
+import { useAnalysis } from '../../components/AnalysisProvider'
 
 export default function Home() {
   // Get frame state and background analysis data
   const { isFrameReady, userFid } = useFrame()
   const { isAnalyzing, error: analysisError, data, startWarmRecsAnalysis } = useBackgroundAnalysis()
+  
+  // Get the analysis state directly to access progress
+  const { analysisState } = useAnalysis()
   
   // Track if warm recs analysis has been attempted
   const [warmRecsAttempted, setWarmRecsAttempted] = useState(false)
@@ -81,9 +85,19 @@ export default function Home() {
         {/* Loading State */}
         {isAnalyzing && (
           <div className="mb-6">
+            <div className="text-center mb-4">
+              <div className="text-green-400 text-lg font-bold mb-2 crt-text-glow">
+                🔄 Analyzing Your Network
+              </div>
+              {data.analysisStats && (
+                <div className="text-green-300 text-sm">
+                  Scanning {data.analysisStats.totalFollowing?.toLocaleString() || 0} connections...
+                </div>
+              )}
+            </div>
             <NetworkAnalysisLoader
-              stage="Analyzing warm connections..."
-              progress={0}
+              stage={analysisState.progress?.step || "Analyzing warm connections..."}
+              progress={analysisState.progress?.current || 0}
               className="mb-4"
             />
           </div>
