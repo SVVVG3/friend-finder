@@ -67,7 +67,23 @@ export function CacheProvider({ children }: { children: ReactNode }) {
   const isCacheValid = (): boolean => {
     const cacheAge = Date.now() - (cache.lastAnalyzed || 0)
     const maxAge = 5 * 60 * 1000 // 5 minutes
-    return cacheAge < maxAge && Boolean(cache.userFid)
+    const hasValidTimeAndFid = cacheAge < maxAge && Boolean(cache.userFid)
+    
+    if (!hasValidTimeAndFid) {
+      console.log('🔄 Cache invalid: expired or no FID')
+      return false
+    }
+    
+    // Cache is only truly valid if we have meaningful data
+    // At minimum, we should have followers and following data
+    const hasBasicData = Boolean(cache.followers && cache.followers.length > 0) || 
+                        Boolean(cache.following && cache.following.length > 0)
+    
+    if (!hasBasicData) {
+      console.log('🔄 Cache invalid: no meaningful data (empty followers/following)')
+    }
+    
+    return hasBasicData
   }
 
   const contextValue: CacheContextType = {
