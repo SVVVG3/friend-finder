@@ -1,6 +1,35 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        // Apply headers to all routes
+        source: '/(.*)',
+        headers: [
+          {
+            // Remove X-Frame-Options to allow iframe embedding
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+          {
+            // Allow embedding from Farcaster domains and any origin
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' https://*.farcaster.xyz https://*.warpcast.com https://*.vercel.app *;",
+          },
+          {
+            // Additional security headers while allowing frames
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
   images: {
     domains: [
       'avatar.vercel.sh', 
