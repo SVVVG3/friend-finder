@@ -19,9 +19,14 @@ export default function Home() {
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
   const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
-    totalMutualConnections: number
     totalRecommendations: number
-    avgConnectionsPerRec: number
+    processingTime: number
+    processingTimeMs: number
+    analyzedAccounts?: number
+    totalFollowing?: number
+    totalCandidates?: number
+    deepAnalysis?: boolean
+    minMutuals?: number
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
