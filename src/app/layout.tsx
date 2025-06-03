@@ -80,12 +80,6 @@ export default function RootLayout({
         <title>Friend Finder - Farcaster Network Analysis</title>
         <meta name="description" content="Discover warm connections and analyze your Farcaster network relationships" />
         
-        {/* Farcaster Frame Meta Tags */}
-        <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png" />
-        <meta property="fc:frame:button:1" content="🔍 Analyze Network" />
-        <meta property="fc:frame:post_url" content="https://farcaster-friend-finder.vercel.app/api/frame" />
-        
         {/* Open Graph Meta Tags */}
         <meta property="og:title" content="Friend Finder - Farcaster Network Analysis" />
         <meta property="og:description" content="Discover warm connections and analyze your Farcaster network relationships" />
