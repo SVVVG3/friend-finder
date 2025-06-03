@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import WarmRecsList from '../../../components/WarmRecsList'
 import { 
   NetworkAnalysisLoader, 
@@ -14,14 +14,25 @@ export default function Home() {
   // Get frame state and background analysis data
   const { isFrameReady, userFid } = useFrame()
   const { isAnalyzing, isComplete, error: analysisError, data, startWarmRecsAnalysis } = useBackgroundAnalysis()
+  
+  // Track if warm recs analysis has been attempted
+  const [warmRecsAttempted, setWarmRecsAttempted] = useState(false)
 
   // Use background analysis data for warm recs
   const warmRecs = data.warmRecs
   const analysisStats = data.analysisStats
 
+  // Check if we have cached warm recs results on load
+  useEffect(() => {
+    if (warmRecs.length > 0 || (analysisStats?.warmRecsCount !== undefined && analysisStats.warmRecsCount >= 0)) {
+      setWarmRecsAttempted(true)
+    }
+  }, [warmRecs.length, analysisStats?.warmRecsCount])
+
   // Manual analysis trigger
   const handleAnalyzeRecommendations = () => {
     if (userFid && startWarmRecsAnalysis) {
+      setWarmRecsAttempted(true)
       startWarmRecsAnalysis(userFid)
     }
   }
@@ -122,8 +133,8 @@ export default function Home() {
           </>
         )}
 
-        {/* Empty State */}
-        {!isAnalyzing && !analysisError && isComplete && warmRecs.length === 0 && analysisStats && (
+        {/* Empty State - Only show if warm recs analysis was run and found nothing */}
+        {!isAnalyzing && !analysisError && warmRecs.length === 0 && analysisStats && analysisStats.warmRecsCount === 0 && warmRecsAttempted && (
           <CRTEmptyState
             icon="🎯"
             title="No Warm Recommendations Found"

@@ -41,7 +41,7 @@ function OneWayOutCard({
   } = user
 
   return (
-    <div className="bg-black border border-orange-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-orange-400/20 hover:bg-orange-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow hover:crt-glow-strong">
+    <div className="bg-black border border-green-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow hover:crt-glow-strong">
       <div className="flex items-start gap-2 sm:gap-3 mb-3 w-full">
         <div className="flex-shrink-0">
           {pfpUrl && !imageError ? (
@@ -50,26 +50,26 @@ function OneWayOutCard({
               alt={`${displayName} avatar`}
               width={48}
               height={48}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-orange-400 crt-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 crt-glow"
               onError={() => setImageError(true)}
               unoptimized={true}
               priority={false}
             />
           ) : (
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-orange-400 bg-orange-400/10 flex items-center justify-center text-orange-400 font-bold text-sm sm:text-lg crt-glow">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-sm sm:text-lg crt-glow">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
         
         <div className="flex-1 min-w-0 overflow-hidden">
-          <h4 className="text-orange-400 font-bold text-sm sm:text-base mb-1 truncate crt-text-glow">{displayName}</h4>
-          <p className="text-orange-300 text-xs sm:text-sm mb-1 truncate">@{username}</p>
+          <h4 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate crt-text-glow">{displayName}</h4>
+          <p className="text-green-300 text-xs sm:text-sm mb-1 truncate">@{username}</p>
         </div>
 
         <div className="flex-shrink-0">
           <button 
-            className="bg-orange-400/10 border border-orange-400 text-orange-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-orange-400/20 hover:shadow-orange-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap crt-border-glow hover:crt-glow-strong"
+            className="bg-green-400/10 border border-green-400 text-green-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-green-400/20 hover:shadow-green-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap crt-border-glow hover:crt-glow-strong"
             onClick={() => onUnfollowUser?.(fid)}
             aria-label={`Unfollow ${displayName}`}
           >
@@ -80,8 +80,8 @@ function OneWayOutCard({
       </div>
 
       {bio && (
-        <div className="mb-3 p-2 sm:p-3 bg-orange-400/5 rounded border-l-2 border-orange-600 w-full overflow-x-hidden crt-border-glow">
-          <p className="text-orange-300 text-xs sm:text-sm leading-relaxed break-words">
+        <div className="mb-3 p-2 sm:p-3 bg-green-400/5 rounded border-l-2 border-green-600 w-full overflow-x-hidden crt-border-glow">
+          <p className="text-green-300 text-xs sm:text-sm leading-relaxed break-words">
             <span className="sm:hidden">
               {bio.length > 80 ? `${bio.substring(0, 80)}...` : bio}
             </span>
@@ -94,12 +94,12 @@ function OneWayOutCard({
 
       <div className="flex gap-4 sm:gap-6 w-full">
         <div className="flex flex-col flex-1">
-          <span className="text-orange-600 text-xs mb-1">Followers:</span>
-          <span className="text-orange-400 font-bold text-xs sm:text-sm crt-text-glow">{followerCount.toLocaleString()}</span>
+          <span className="text-green-600 text-xs mb-1">Followers:</span>
+          <span className="text-green-400 font-bold text-xs sm:text-sm crt-text-glow">{followerCount.toLocaleString()}</span>
         </div>
         <div className="flex flex-col flex-1">
-          <span className="text-orange-600 text-xs mb-1">Following:</span>
-          <span className="text-orange-400 font-bold text-xs sm:text-sm crt-text-glow">{followingCount.toLocaleString()}</span>
+          <span className="text-green-600 text-xs mb-1">Following:</span>
+          <span className="text-green-400 font-bold text-xs sm:text-sm crt-text-glow">{followingCount.toLocaleString()}</span>
         </div>
       </div>
     </div>
@@ -120,8 +120,8 @@ export default function OneWayOutPage() {
     alert(`Unfollow user with FID: ${fid}`)
   }
 
-  // Show loading state while frame is initializing or analysis is running
-  if (!isFrameReady || isAnalyzing) {
+  // Show loading state while frame is initializing or during basic analysis (not warm recs)
+  if (!isFrameReady || (isAnalyzing && oneWayOut.length === 0 && analysisStats === null)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <NetworkAnalysisLoader 
@@ -146,13 +146,25 @@ export default function OneWayOutPage() {
   // Show empty state if no data
   if (isComplete && oneWayOut.length === 0) {
     return (
-      <div className="min-h-screen bg-black p-4">
-        <div className="max-w-4xl mx-auto pt-8">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono text-orange-400 crt-text-glow">
-              📤 One-Way Following
+      <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
+        <div className="max-w-4xl mx-auto w-full">
+          {/* Friend Finder Branding Header */}
+          <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
+              🔍 FRIEND FINDER
             </h1>
-            <p className="text-orange-300 mb-6 font-mono text-sm sm:text-base">
+            <p className="text-green-300 text-base sm:text-lg">
+              Discover warm connections in your Farcaster network
+            </p>
+            <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
+          </div>
+
+          {/* Page Header */}
+          <div className="text-center mb-6">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
+              📤 One-Way Following
+            </h2>
+            <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
               People you follow but who don&apos;t follow you back
             </p>
           </div>
@@ -167,14 +179,25 @@ export default function OneWayOutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black p-4">
-      <div className="max-w-4xl mx-auto pt-8">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono text-orange-400 crt-text-glow">
-            📤 One-Way Following
+    <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full">
+        {/* Friend Finder Branding Header */}
+        <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
+            🔍 FRIEND FINDER
           </h1>
-          <p className="text-orange-300 mb-6 font-mono text-sm sm:text-base">
+          <p className="text-green-300 text-base sm:text-lg">
+            Discover warm connections in your Farcaster network
+          </p>
+          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
+        </div>
+
+        {/* Page Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
+            📤 One-Way Following
+          </h2>
+          <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
             People you follow but who don&apos;t follow you back
           </p>
         </div>
@@ -194,17 +217,17 @@ export default function OneWayOutPage() {
               </div>
               <div className="text-green-300 text-sm font-mono">Total Following</div>
             </div>
-            <div className="bg-black border border-orange-400 rounded-lg p-4 text-center crt-glow">
-              <div className="text-orange-400 font-bold text-lg crt-text-glow">
+            <div className="bg-black border border-blue-400 rounded-lg p-4 text-center crt-glow">
+              <div className="text-blue-400 font-bold text-lg crt-text-glow">
                 {oneWayOut.length.toLocaleString()}
               </div>
-              <div className="text-orange-300 text-sm font-mono">One-Way Following</div>
+              <div className="text-blue-300 text-sm font-mono">One-Way Following</div>
             </div>
           </div>
         )}
 
         {/* Results List */}
-        <div className="space-y-3">
+        <div className="w-full">
           {oneWayOut.map((user) => (
             <OneWayOutCard 
               key={user.fid} 
@@ -212,13 +235,6 @@ export default function OneWayOutPage() {
               onUnfollowUser={handleUnfollowUser}
             />
           ))}
-        </div>
-
-        {/* Results Summary */}
-        <div className="mt-6 p-4 bg-orange-400/5 border border-orange-400 rounded-lg text-center crt-glow">
-          <p className="text-orange-400 font-mono text-sm">
-            Found {oneWayOut.length} people you follow but who don&apos;t follow you back
-          </p>
         </div>
       </div>
     </div>

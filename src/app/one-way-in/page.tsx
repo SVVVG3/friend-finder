@@ -120,8 +120,8 @@ export default function OneWayInPage() {
     alert(`Follow user with FID: ${fid}`)
   }
 
-  // Show loading state while frame is initializing or analysis is running
-  if (!isFrameReady || isAnalyzing) {
+  // Show loading state while frame is initializing or during basic analysis (not warm recs)
+  if (!isFrameReady || (isAnalyzing && oneWayIn.length === 0 && analysisStats === null)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <NetworkAnalysisLoader 
@@ -146,12 +146,24 @@ export default function OneWayInPage() {
   // Show empty state if no data
   if (isComplete && oneWayIn.length === 0) {
     return (
-      <div className="min-h-screen bg-black p-4">
-        <div className="max-w-4xl mx-auto pt-8">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
-              📨 One-Way Followers
+      <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
+        <div className="max-w-4xl mx-auto w-full">
+          {/* Friend Finder Branding Header */}
+          <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
+              🔍 FRIEND FINDER
             </h1>
+            <p className="text-green-300 text-base sm:text-lg">
+              Discover warm connections in your Farcaster network
+            </p>
+            <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
+          </div>
+
+          {/* Page Header */}
+          <div className="text-center mb-6">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
+              📨 One-Way Followers
+            </h2>
             <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
               People who follow you but you don&apos;t follow back
             </p>
@@ -167,13 +179,24 @@ export default function OneWayInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black p-4">
-      <div className="max-w-4xl mx-auto pt-8">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
-            📨 One-Way Followers
+    <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full">
+        {/* Friend Finder Branding Header */}
+        <div className="text-center mb-6 sm:mb-8 w-full pt-4 sm:pt-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
+            🔍 FRIEND FINDER
           </h1>
+          <p className="text-green-300 text-base sm:text-lg">
+            Discover warm connections in your Farcaster network
+          </p>
+          <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
+        </div>
+
+        {/* Page Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
+            📨 One-Way Followers
+          </h2>
           <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
             People who follow you but you don&apos;t follow back
           </p>
@@ -204,7 +227,7 @@ export default function OneWayInPage() {
         )}
 
         {/* Results List */}
-        <div className="space-y-3">
+        <div className="w-full">
           {oneWayIn.map((user) => (
             <OneWayInCard 
               key={user.fid} 
@@ -212,13 +235,6 @@ export default function OneWayInPage() {
               onFollowUser={handleFollowUser}
             />
           ))}
-        </div>
-
-        {/* Results Summary */}
-        <div className="mt-6 p-4 bg-green-400/5 border border-green-400 rounded-lg text-center crt-glow">
-          <p className="text-green-400 font-mono text-sm">
-            Found {oneWayIn.length} people who follow you but you don&apos;t follow back
-          </p>
         </div>
       </div>
     </div>
