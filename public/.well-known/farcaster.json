@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjQ2NjExMSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDQ0ZDRjNThlZmNCYjQ0NjM5RDY0NDIwMTc1Q2Y1MTlhQTMxOTFhODYifQ",
+    "payload": "eyJkb21haW4iOiJmYXJjYXN0ZXItZnJpZW5kLWZpbmRlci52ZXJjZWwuYXBwIn0",
+    "signature": "MHg0MjcwOWNlZDkzYWIyY2JkYTFhNzA1NmNjYjg2MmZlNDNmMGRkNzUwNDAyOGIwMzljNzRlNDczNDU5MmVlOTEyMWQ3NmM2Zjc1NWU2NzA0NTVhNTgwZjJjNjc0YzVlMDYzMDg2OTk1MDBiZTEyNDdjMWViODEzYjEyMDJhYzhmZjFj"
+  },
   "frame": {
     "version": "1",
     "name": "Friend Finder",
