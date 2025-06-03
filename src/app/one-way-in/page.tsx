@@ -213,6 +213,8 @@ export default function OneWayInPage() {
       // Also calculate one-way OUT for complete cache data
       const followerFids = new Set(followers.map(u => u.fid))
       const oneWayOutResults = following.filter(user => !followerFids.has(user.fid))
+        // Sort by follower count (highest first) for consistency
+        .sort((a, b) => b.followerCount - a.followerCount)
 
       // Store in cache for future navigation
       cache.setCache({

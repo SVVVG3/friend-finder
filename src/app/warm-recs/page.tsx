@@ -15,7 +15,6 @@ export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalRecommendations: number
     processingTime: number
@@ -46,13 +45,17 @@ export default function Home() {
       
       // Use cached data
       setRecommendations(cache.warmRecs)
-      // For stats, use basic info since warm recs may not have detailed stats
+      // Use complete stats from cache if available
       if (cache.analysisStats) {
         setAnalysisStats({
           totalRecommendations: cache.warmRecs.length,
           processingTime: 0,
           processingTimeMs: 0,
-          analyzedAccounts: cache.analysisStats.totalFollowing || 0
+          totalFollowing: cache.analysisStats.totalFollowing || 0,
+          analyzedAccounts: cache.analysisStats.totalFollowing || 0,
+          totalCandidates: cache.warmRecs.length,
+          deepAnalysis: true,
+          minMutuals: 2
         })
       }
       
@@ -98,7 +101,6 @@ export default function Home() {
       if (data.success) {
         setRecommendations(data.recommendations || [])
         setAnalysisStats(data.debug)
-        setIsDeepAnalysis(deep)
         
         // Store warm recommendations in cache
         if (data.recommendations && data.recommendations.length > 0) {
@@ -140,10 +142,10 @@ export default function Home() {
     // Try cache first, then fetch if needed
     if (userFid && userFid.trim() !== '') {
       if (!loadFromCacheIfValid()) {
-        fetchRecommendations(parseInt(userFid) || 0)
+        fetchRecommendations(parseInt(userFid), true) // Always use deep analysis
       }
     } else {
-      fetchRecommendations(parseInt(userFid) || 0)
+      fetchRecommendations(parseInt(userFid) || 0, true) // Always use deep analysis
     }
   }, [isFrameReady, userFid, fetchRecommendations, loadFromCacheIfValid])
 
@@ -151,15 +153,11 @@ export default function Home() {
     if (userFid) fetchRecommendations(parseInt(userFid), true)
   }
 
-  const handleStandardAnalysis = () => {
-    if (userFid) fetchRecommendations(parseInt(userFid), false)
-  }
-
   const handleRetry = () => {
     if (userFid) {
       // Clear cache and retry
       cache.setCache({ lastAnalyzed: 0 })
-      fetchRecommendations(parseInt(userFid))
+      fetchRecommendations(parseInt(userFid), true) // Always use deep analysis
     }
   }
 
@@ -189,69 +187,23 @@ export default function Home() {
           <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
 
-        {/* FID Input - Mobile Optimized */}
-        <form onSubmit={(e) => e.preventDefault()} className="mb-6 w-full">
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 px-2 w-full">
-            <label htmlFor="fid" className="text-green-300 text-sm sm:text-base text-center sm:text-left shrink-0">
-              Enter FID:
-            </label>
-            <div className="flex gap-2 w-full max-w-sm sm:max-w-none sm:w-auto">
-              <input
-                type="number"
-                id="fid"
-                value={userFid}
-                onChange={() => {}} 
-                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
-                placeholder="Your FID"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                disabled={loading}
-                readOnly
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
-              >
-                Analyze
-              </button>
-            </div>
-          </div>
-        </form>
-
-        {/* Analysis Mode Controls - Mobile Optimized */}
-        <div className="mb-6 text-center px-2 w-full">
-          <div className="inline-flex gap-1 sm:gap-2 bg-gray-900 p-1 rounded-lg border border-green-600 w-full max-w-md sm:max-w-none sm:w-auto crt-glow">
-            <button
-              onClick={handleStandardAnalysis}
-              disabled={loading}
-              className={`px-3 sm:px-4 py-2 sm:py-2 rounded-md transition-colors text-xs sm:text-sm flex-1 sm:flex-none min-h-[44px] whitespace-nowrap ${
-                !isDeepAnalysis && !loading
-                  ? 'bg-green-900 text-green-400 border border-green-600 crt-glow'
-                  : 'text-green-600 hover:text-green-400'
-              }`}
-            >
-              Standard<span className="hidden sm:inline"> Analysis</span>
-            </button>
+        {/* Analyze Button - Clean UI */}
+        {!loading && !error && recommendations.length === 0 && (
+          <div className="mb-6 text-center px-2 w-full">
             <button
               onClick={handleDeepAnalysis}
               disabled={loading}
-              className={`px-3 sm:px-4 py-2 sm:py-2 rounded-md transition-colors text-xs sm:text-sm flex-1 sm:flex-none min-h-[44px] whitespace-nowrap ${
-                isDeepAnalysis && !loading
-                  ? 'bg-green-900 text-green-400 border border-green-600 crt-glow'
-                  : 'text-green-600 hover:text-green-400'
-              }`}
+              className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-6 py-4 rounded-lg border border-green-600 transition-colors font-bold text-lg crt-glow hover:crt-glow-strong"
             >
-              🚀 Deep<span className="hidden sm:inline"> Analysis</span>
+              🚀 Analyze My Recommendations
             </button>
+            <p className="text-green-600 text-sm mt-3 max-w-md mx-auto leading-relaxed">
+              Deep analysis of your network to find warm connections through mutual follows. 
+              <br />
+              <strong>Takes 2-3 minutes</strong> for comprehensive results.
+            </p>
           </div>
-          <p className="text-xs text-green-600 mt-2 max-w-sm sm:max-w-none mx-auto leading-relaxed">
-            {isDeepAnalysis 
-              ? 'Deep: Analyzes ALL accounts with 1000+ followers for comprehensive results'
-              : 'Standard: Analyzes accounts with 500+ followers for quick results (30-60s)'
-            }
-          </p>
-        </div>
+        )}
 
         {/* Analysis Stats - Mobile Responsive */}
         {analysisStats && !loading && (
@@ -317,30 +269,14 @@ export default function Home() {
                   </p>
                 </div>
                 <WarmRecsList recommendations={recommendations} />
-                
-                {/* Show more button if we hit the limit */}
-                {recommendations.length >= 50 && !isDeepAnalysis && (
-                  <div className="text-center mt-6">
-                    <button
-                      onClick={handleDeepAnalysis}
-                      disabled={loading}
-                      className="bg-green-900 hover:bg-green-800 text-green-400 px-6 py-3 rounded-lg border border-green-600 transition-colors font-bold crt-glow hover:crt-glow-strong"
-                    >
-                      🚀 Find More with Deep Analysis
-                    </button>
-                    <p className="text-xs text-green-600 mt-2">
-                      Analyze your full network for stronger connections
-                    </p>
-                  </div>
-                )}
               </>
             ) : (
               <CRTEmptyState
                 icon="🤖"
                 title="No Warm Recommendations Found"
                 message="Try following more people or use Deep Analysis for more thorough search"
-                action={isDeepAnalysis ? undefined : handleDeepAnalysis}
-                actionLabel={isDeepAnalysis ? undefined : "🚀 Try Deep Analysis"}
+                action={handleRetry}
+                actionLabel="🚀 Try Again"
               />
             )}
           </>

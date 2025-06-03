@@ -193,6 +193,8 @@ export default function OneWayOutPage() {
       // Calculate one-way OUT (people you follow but who don't follow you back)
       const followerFids = new Set(followers.map(u => u.fid))
       const oneWayOutResults = following.filter(user => !followerFids.has(user.fid))
+        // Sort by follower count (highest first) to show most influential accounts at top
+        .sort((a, b) => b.followerCount - a.followerCount)
 
       console.log(`🔄 One-way OUT analysis results: ${oneWayOutResults.length} accounts`)
 

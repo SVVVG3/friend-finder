@@ -794,3 +794,86 @@ useEffect(() => {
 - Essential for Farcaster Mini Apps with multi-page navigation
 
 ---
+
+### 🔧 CACHE DATA COMPLETENESS FIX (Jan 3, 2025)
+
+**✅ CRITICAL CACHE BUG FIX: Incomplete Data Storage Causing Empty Results**
+
+**Problem:** Pages showing 0 results when navigating between tabs despite successful API calls:
+- User visits one-way-in page → Analysis runs successfully → 8346 results found
+- User navigates to one-way-out page → Shows 0 results (loading from incomplete cache)
+- Cache validation showed "valid data found" but results were empty
+
+**Root Cause Analysis:**
+```javascript
+// BEFORE: one-way-in page only stored oneWayIn data
+cache.setCache({
+  userFid: fid,
+  followers,
+  following,
+  oneWayIn: oneWayInResults,  // ✅ Calculated and stored
+  // oneWayOut: MISSING!      // ❌ Not calculated or stored
+  analysisStats: { oneWayInCount: oneWayInResults.length }
+})
+
+// When one-way-out page loads:
+if (cache.isCacheValid() && cache.userFid === userFid) {
+  setOneWayOut(cache.oneWayOut)  // ❌ Gets empty array []
+  // Shows 0 results instead of running analysis
+}
+```
+
+**Technical Solution Implemented:**
+
+1. **Complete Data Calculation**: Updated one-way-in page to calculate BOTH oneWayIn AND oneWayOut
+2. **Full Cache Storage**: Store complete analysis results for all page types
+3. **Consistent Navigation**: Ensure any page can load data for any other page
+
+**Code Changes:**
+```javascript
+// AFTER: Complete data calculation and storage
+// Calculate one-way IN (people who follow you but you don't follow back)
+const oneWayInResults = calculateOneWayIn(following, followers)
+
+// Also calculate one-way OUT for complete cache data
+const followerFids = new Set(followers.map(u => u.fid))
+const oneWayOutResults = following.filter(user => !followerFids.has(user.fid))
+
+cache.setCache({
+  userFid: fid,
+  followers,
+  following,
+  oneWayIn: oneWayInResults,   // ✅ Complete
+  oneWayOut: oneWayOutResults, // ✅ Complete  
+  analysisStats: {
+    totalFollowing: following.length,
+    totalFollowers: followers.length,
+    oneWayInCount: oneWayInResults.length,
+    oneWayOutCount: oneWayOutResults.length  // ✅ Complete
+  }
+})
+```
+
+**Additional Fixes:**
+- **FID Validation Fix**: Updated cache validation to handle initial empty userFid
+- **Race Condition Resolution**: Fixed FrameProvider vs CacheProvider userFid mismatch
+
+**Files Modified:**
+- `src/app/one-way-in/page.tsx` - Added oneWayOut calculation and storage
+- `src/app/one-way-out/page.tsx` - Already had complete calculation (verified)
+- `src/app/warm-recs/page.tsx` - Updated cache validation logic
+
+**Expected Behavior Now:**
+1. ✅ Visit any page → Complete analysis runs once
+2. ✅ Navigate to other pages → Instant loading from complete cache
+3. ✅ All pages show correct non-zero results
+4. ✅ 5-minute cache expiration works properly
+5. ✅ No duplicate API calls or frame ready conflicts
+
+**Test Results Expected:**
+- one-way-in: 8346 accounts (as shown in logs)
+- one-way-out: Should show actual results instead of 0
+- warm-recs: Should load from cache or run fresh analysis
+- Navigation: Instant between all pages with cached data
+
+---
