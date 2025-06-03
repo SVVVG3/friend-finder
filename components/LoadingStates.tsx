@@ -333,4 +333,84 @@ export function CRTLoadingOverlay({
       </div>
     </div>
   )
+}
+
+// Onboarding Analysis Loader - explains value proposition to first-time users
+export function OnboardingAnalysisLoader({
+  stage = 'Initializing',
+  progress = 0,
+  className = ''
+}: {
+  stage?: string
+  progress?: number
+  className?: string
+}) {
+  return (
+    <div className={`text-center py-8 px-4 max-w-md mx-auto ${className}`}>
+      {/* Branding Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-green-400 mb-2 tracking-wider crt-text-glow">
+          🔍 FRIEND FINDER
+        </h1>
+        <div className="border-t border-green-600 w-24 mx-auto crt-glow"></div>
+      </div>
+
+      {/* Value Proposition */}
+      <div className="mb-8 text-left bg-gray-900/50 border border-green-600/50 rounded-lg p-4">
+        <h3 className="text-green-400 font-bold text-lg mb-3 text-center crt-text-glow">
+          🚀 What you'll discover:
+        </h3>
+        <div className="space-y-2 text-green-300 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-400">📨</span>
+            <span>People who follow you but you don't follow back</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-orange-400">📤</span>
+            <span>People you follow who don't follow you back</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-400">🌟</span>
+            <span>Warm connection recommendations (optional)</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Loading Animation */}
+      <div className="crt-network-animation inline-block mb-4">
+        <div className="h-16 w-16 border-2 border-green-400/30 rounded-full relative crt-glow">
+          <div className="absolute inset-2 border border-green-400/60 rounded-full crt-pulse">
+            <div className="absolute inset-2 bg-green-400/20 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="text-green-400 text-lg font-bold font-mono mb-2 crt-text-glow">
+        🌐 Analyzing Your Network
+      </div>
+      
+      <div className="text-green-300 text-sm mb-4 font-mono">
+        {stage}<span className="crt-typing-cursor">|</span>
+      </div>
+      
+      {progress > 0 && (
+        <div className="max-w-xs mx-auto mb-4">
+          <div className="crt-progress-bar h-2 mb-2">
+            <div 
+              className="crt-progress-fill h-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <div className="text-green-600 text-xs font-mono">
+            {progress}% Complete • Just takes 15-30 seconds
+          </div>
+        </div>
+      )}
+
+      {/* Expectation Setting */}
+      <div className="text-green-600 text-xs font-mono mt-4 bg-green-400/5 p-3 rounded border border-green-600/30">
+        💡 We're scanning your Farcaster network to find hidden connection opportunities and optimize your follow strategy
+      </div>
+    </div>
+  )
 } 
