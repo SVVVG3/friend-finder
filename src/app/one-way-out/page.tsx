@@ -8,8 +8,8 @@ import {
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { sdk } from '@farcaster/frame-sdk'
 import { useCache } from '../../components/CacheProvider'
+import { useFrame } from '../../components/FrameProvider'
 
 interface FarcasterUser {
   fid: number
@@ -115,7 +115,6 @@ export default function OneWayOutPage() {
   const [oneWayOut, setOneWayOut] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('')
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -123,30 +122,9 @@ export default function OneWayOutPage() {
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
-  // Get cache functions
+  // Get cache functions and frame state
   const cache = useCache()
-
-  // Initialize user FID from Farcaster SDK
-  useEffect(() => {
-    const initializeFid = async () => {
-      try {
-        const context = await sdk.context
-        const currentUserFid = context.user.fid
-        if (currentUserFid) {
-          console.log(`🔍 Using current user's FID: ${currentUserFid}`)
-          setUserFid(currentUserFid.toString())
-        } else {
-          console.log('⚠️ No user FID available from SDK context')
-          setUserFid('')
-        }
-      } catch (err) {
-        console.error('❌ Failed to get user FID from SDK:', err)
-        setUserFid('')
-      }
-    }
-
-    initializeFid()
-  }, [])
+  const { isFrameReady, userFid } = useFrame()
 
   // Check cache and load cached data if available
   const loadFromCacheIfValid = React.useCallback(() => {
@@ -204,43 +182,49 @@ export default function OneWayOutPage() {
       const followingData = await followingResponse.json()
 
       if (!followersData.success || !followingData.success) {
-        throw new Error(followersData.message || followingData.message || 'API error')
+        throw new Error('Invalid response from API')
       }
 
-      // Calculate one-way OUT (people you follow who don't follow you back)
-      const followersSet = new Set(followersData.followers.map((user: FarcasterUser) => user.fid))
-      const oneWayOut = followingData.following.filter((user: FarcasterUser) => !followersSet.has(user.fid))
-      
-      // Sort by follower count (most influential first)
-      const sortedOneWayOut = oneWayOut.sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
+      const followers: FarcasterUser[] = followersData.followers || []
+      const following: FarcasterUser[] = followingData.following || []
 
-      setOneWayOut(sortedOneWayOut)
-      const stats = {
-        totalFollowers: followersData.followers.length,
-        totalFollowing: followingData.following.length,
-        oneWayOutCount: sortedOneWayOut.length
-      }
-      setAnalysisStats(stats)
+      console.log(`📊 Fetched ${following.length} following, ${followers.length} followers`)
 
-      // Store in cache
+      // Calculate one-way OUT (people you follow but who don't follow you back)
+      const followerFids = new Set(followers.map(u => u.fid))
+      const oneWayOutResults = following.filter(user => !followerFids.has(user.fid))
+
+      console.log(`🔄 One-way OUT analysis results: ${oneWayOutResults.length} accounts`)
+
+      setOneWayOut(oneWayOutResults)
+      setAnalysisStats({
+        totalFollowing: following.length,
+        totalFollowers: followers.length,
+        oneWayOutCount: oneWayOutResults.length
+      })
+
+      // Store in cache, calculating one-way in as well for completeness
+      const followingFids = new Set(following.map(u => u.fid))
+      const oneWayInResults = followers.filter(user => !followingFids.has(user.fid))
+
       cache.setCache({
         userFid: fid,
-        followers: followersData.followers,
-        following: followingData.following,
-        oneWayOut: sortedOneWayOut,
+        followers,
+        following,
+        oneWayIn: oneWayInResults,
+        oneWayOut: oneWayOutResults,
         analysisStats: {
-          totalFollowing: followingData.following.length,
-          totalFollowers: followersData.followers.length,
-          oneWayOutCount: sortedOneWayOut.length
+          totalFollowing: following.length,
+          totalFollowers: followers.length,
+          oneWayInCount: oneWayInResults.length,
+          oneWayOutCount: oneWayOutResults.length
         }
       })
-      
-      console.log(`✅ One-way OUT analysis complete: ${sortedOneWayOut.length} asymmetric follows found`)
       console.log('💾 Data cached for future navigation')
-      
+
     } catch (err) {
-      console.error('❌ One-way OUT analysis failed:', err)
-      setError(err instanceof Error ? err.message : 'Failed to analyze relationships')
+      console.error('❌ Error during one-way OUT analysis:', err)
+      setError(err instanceof Error ? err.message : 'Analysis failed')
       setOneWayOut([])
       setAnalysisStats(null)
     } finally {
@@ -249,42 +233,46 @@ export default function OneWayOutPage() {
     }
   }, [cache, loadFromCacheIfValid])
 
-  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
+  // Load data when frame is ready and we have a user FID
   useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
-        await sdk.actions.ready()
-        console.log('✅ Frame ready called successfully - splash screen dismissed')
-      } catch (error) {
-        console.error('❌ Failed to call frame ready:', error)
-      }
+    if (!isFrameReady) {
+      console.log('📊 Loading data (frame ready handled by home page)...')
+      return
     }
-    
-    initializeFrame()
-  }, []) // Run once on mount - HIGHEST PRIORITY
 
-  // Auto-load data on mount, checking cache first
-  useEffect(() => {
     if (userFid && userFid.trim() !== '') {
-      // Try cache first, then analyze if needed
+      console.log(`🔍 Using current user's FID: ${userFid}`)
+      
+      // Try cache first, then fetch if needed
       if (!loadFromCacheIfValid()) {
         analyzeOneWayOut(userFid)
       }
     }
-  }, [userFid, analyzeOneWayOut, loadFromCacheIfValid])
+  }, [isFrameReady, userFid, analyzeOneWayOut, loadFromCacheIfValid])
 
-  // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {
-    console.log(`🔗 Unfollow user with FID: ${fid}`)
-    alert(`Unfollow functionality would be implemented here for FID: ${fid}`)
+    // TODO: Implement unfollow functionality using Farcaster actions
+    console.log(`Unfollowing user with FID: ${fid}`)
   }
 
-  // Handle retry
   const handleRetry = () => {
     if (userFid) {
+      // Clear cache and retry
+      cache.setCache({ lastAnalyzed: 0 })
       analyzeOneWayOut(userFid)
     }
+  }
+
+  // Show loading if frame is not ready
+  if (!isFrameReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <NetworkAnalysisLoader 
+          stage="Initializing Farcaster frame..."
+          progress={0}
+        />
+      </div>
+    )
   }
 
   return (

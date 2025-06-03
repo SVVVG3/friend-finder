@@ -2,35 +2,20 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { sdk } from '@farcaster/frame-sdk'
+import { useFrame } from '../components/FrameProvider'
 
 export default function HomePage() {
   const router = useRouter()
+  const { isFrameReady } = useFrame()
 
   useEffect(() => {
-    const initializeAndRedirect = async () => {
-      try {
-        console.log('🚀 HOME PAGE: Calling sdk.actions.ready() to dismiss splash screen')
-        
-        // Call ready immediately to dismiss splash screen
-        await sdk.actions.ready()
-        console.log('✅ Frame ready called successfully - splash screen dismissed')
-        
-        // Redirect to the main app functionality
-        console.log('🎯 Redirecting to /one-way-in...')
-        router.push('/one-way-in')
-        
-      } catch (error) {
-        console.error('❌ Failed to initialize frame:', error)
-        // Even if frame ready fails, still redirect to main app
-        router.push('/one-way-in')
-      }
+    if (isFrameReady) {
+      console.log('🎯 Frame is ready, redirecting to /one-way-in...')
+      router.push('/one-way-in')
     }
+  }, [isFrameReady, router])
 
-    initializeAndRedirect()
-  }, [router])
-
-  // Show loading screen while redirecting
+  // Show loading screen while waiting for frame to be ready
   return (
     <div className="min-h-screen bg-black text-green-400 flex items-center justify-center p-4">
       <div className="text-center max-w-md">

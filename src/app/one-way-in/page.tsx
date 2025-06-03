@@ -8,8 +8,8 @@ import {
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
-import { sdk } from '@farcaster/frame-sdk'
 import { useCache } from '../../components/CacheProvider'
+import { useFrame } from '../../components/FrameProvider'
 
 interface FarcasterUser {
   fid: number
@@ -111,7 +111,6 @@ export default function OneWayInPage() {
   const [oneWayIn, setOneWayIn] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('')
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -119,32 +118,9 @@ export default function OneWayInPage() {
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
-  // Get cache functions
+  // Get cache functions and frame state
   const cache = useCache()
-
-  // Initialize user FID from Farcaster SDK
-  useEffect(() => {
-    const initializeFid = async () => {
-      try {
-        const context = await sdk.context
-        const currentUserFid = context.user.fid
-        if (currentUserFid) {
-          console.log(`🔍 Using current user's FID: ${currentUserFid}`)
-          setUserFid(currentUserFid.toString())
-        } else {
-          console.log('⚠️ No user FID available from SDK context')
-          // Fallback to allow manual input
-          setUserFid('')
-        }
-      } catch (err) {
-        console.error('❌ Failed to get user FID from SDK:', err)
-        // Fallback to allow manual input
-        setUserFid('')
-      }
-    }
-
-    initializeFid()
-  }, [])
+  const { isFrameReady, userFid } = useFrame()
 
   // Calculate one-way IN relationships only
   const calculateOneWayIn = React.useCallback((
@@ -198,94 +174,108 @@ export default function OneWayInPage() {
       
       setLoadingStage('Fetching your network data...')
       
-      // Fetch both followers and following in parallel
-      const [followingResponse, followersResponse] = await Promise.all([
-        fetch(`/api/following?fid=${fid.trim()}`),
-        fetch(`/api/followers?fid=${fid.trim()}`)
+      // Fetch both followers and following
+      const [followersResponse, followingResponse] = await Promise.all([
+        fetch(`/api/followers?fid=${fid}`),
+        fetch(`/api/following?fid=${fid}`)
       ])
 
-      if (!followingResponse.ok) {
-        throw new Error(`Failed to fetch following: ${followingResponse.statusText}`)
-      }
-      
-      if (!followersResponse.ok) {
-        throw new Error(`Failed to fetch followers: ${followersResponse.statusText}`)
+      if (!followersResponse.ok || !followingResponse.ok) {
+        throw new Error('Failed to fetch network data')
       }
 
-      setLoadingStage('Processing network data...')
-
-      const followingData = await followingResponse.json()
       const followersData = await followersResponse.json()
+      const followingData = await followingResponse.json()
 
-      if (!followingData.success) {
-        throw new Error(followingData.error || 'Failed to fetch following')
+      if (!followersData.success || !followingData.success) {
+        throw new Error('Invalid response from API')
       }
+
+      const followers: FarcasterUser[] = followersData.followers || []
+      const following: FarcasterUser[] = followingData.following || []
+
+      console.log(`📊 Fetched ${following.length} following, ${followers.length} followers`)
+
+      setLoadingStage('Analyzing one-way relationships...')
       
-      if (!followersData.success) {
-        throw new Error(followersData.error || 'Failed to fetch followers')
-      }
-
-      console.log(`📊 Fetched ${followingData.following.length} following, ${followersData.followers.length} followers`)
-
-      setLoadingStage('Calculating one-way relationships...')
-
-      // Calculate one-way IN relationships
-      const oneWayInUsers = calculateOneWayIn(
-        followingData.following,
-        followersData.followers
-      )
-
-      console.log(`🔄 One-way IN analysis results: ${oneWayInUsers.length} accounts`)
-
-      // Set local state
-      setOneWayIn(oneWayInUsers)
-      const stats = {
-        totalFollowing: followingData.following.length,
-        totalFollowers: followersData.followers.length,
-        oneWayInCount: oneWayInUsers.length
-      }
-      setAnalysisStats(stats)
-
-      // Store in cache
-      cache.setCache({
-        userFid: fid,
-        followers: followersData.followers,
-        following: followingData.following,
-        oneWayIn: oneWayInUsers,
-        analysisStats: {
-          totalFollowing: followingData.following.length,
-          totalFollowers: followersData.followers.length,
-          oneWayInCount: oneWayInUsers.length
-        }
+      // Calculate one-way IN (people who follow you but you don't follow back)
+      const oneWayInResults = calculateOneWayIn(following, followers)
+      
+      console.log(`🔄 One-way IN analysis results: ${oneWayInResults.length} accounts`)
+      
+      setOneWayIn(oneWayInResults)
+      setAnalysisStats({
+        totalFollowing: following.length,
+        totalFollowers: followers.length,
+        oneWayInCount: oneWayInResults.length
       })
 
+      // Store in cache for future navigation
+      cache.setCache({
+        userFid: fid,
+        followers,
+        following,
+        oneWayIn: oneWayInResults,
+        analysisStats: {
+          totalFollowing: following.length,
+          totalFollowers: followers.length,
+          oneWayInCount: oneWayInResults.length
+        }
+      })
       console.log('💾 Data cached for future navigation')
 
     } catch (err) {
-      console.error('❌ One-way IN analysis failed:', err)
-      setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
+      console.error('❌ Error during one-way IN analysis:', err)
+      setError(err instanceof Error ? err.message : 'Analysis failed')
+      setOneWayIn([])
+      setAnalysisStats(null)
     } finally {
       setLoading(false)
       setLoadingStage('Initializing...')
     }
   }, [calculateOneWayIn, cache, loadFromCacheIfValid])
 
-  // Handle follow action (placeholder)
-  const handleFollowUser = async (fid: number) => {
-    console.log(`🔗 Follow user with FID: ${fid}`)
-    alert(`Follow functionality would be implemented here for FID: ${fid}`)
-  }
-
-  // Auto-load data on mount, checking cache first
+  // Load data when frame is ready and we have a user FID
   useEffect(() => {
-    console.log('📊 Loading data (frame ready handled by home page)...')
+    if (!isFrameReady) {
+      console.log('📊 Loading data (frame ready handled by home page)...')
+      return
+    }
+
     if (userFid && userFid.trim() !== '') {
-      // Try cache first, then analyze if needed
+      console.log(`🔍 Using current user's FID: ${userFid}`)
+      
+      // Try cache first, then fetch if needed
       if (!loadFromCacheIfValid()) {
         analyzeOneWayIn(userFid)
       }
     }
-  }, [userFid, analyzeOneWayIn, loadFromCacheIfValid])
+  }, [isFrameReady, userFid, analyzeOneWayIn, loadFromCacheIfValid])
+
+  const handleFollowUser = async (fid: number) => {
+    // TODO: Implement follow functionality using Farcaster actions
+    console.log(`Following user with FID: ${fid}`)
+  }
+
+  const handleRetry = () => {
+    if (userFid) {
+      // Clear cache and retry
+      cache.setCache({ lastAnalyzed: 0 })
+      analyzeOneWayIn(userFid)
+    }
+  }
+
+  // Show loading if frame is not ready
+  if (!isFrameReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <NetworkAnalysisLoader 
+          stage="Initializing Farcaster frame..."
+          progress={0}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
@@ -347,7 +337,7 @@ export default function OneWayInPage() {
           <CRTErrorState
             title="Analysis Failed"
             message={error}
-            onRetry={() => analyzeOneWayIn(userFid)}
+            onRetry={handleRetry}
             retryLabel="Try Again"
             className="mb-6"
           />

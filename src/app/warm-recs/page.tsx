@@ -8,16 +8,14 @@ import {
   CRTErrorState, 
   CRTEmptyState
 } from '../../../components/LoadingStates'
-import { sdk } from '@farcaster/frame-sdk'
 import { useCache } from '../../components/CacheProvider'
+import { useFrame } from '../../components/FrameProvider'
 
 export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('')
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
-  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalRecommendations: number
     processingTime: number
@@ -31,29 +29,14 @@ export default function Home() {
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
 
-  // Get cache functions
+  // Get cache functions and frame state
   const cache = useCache()
+  const { isFrameReady, userFid } = useFrame()
 
-  // Initialize user FID from Farcaster SDK
+  // Add component mount debugging
   useEffect(() => {
-    const initializeFid = async () => {
-      try {
-        const context = await sdk.context
-        const currentUserFid = context.user.fid
-        if (currentUserFid) {
-          console.log(`🔍 Using current user's FID: ${currentUserFid}`)
-          setUserFid(currentUserFid.toString())
-        } else {
-          console.log('⚠️ No user FID available from SDK context')
-          setUserFid('')
-        }
-      } catch (err) {
-        console.error('❌ Failed to get user FID from SDK:', err)
-        setUserFid('')
-      }
-    }
-
-    initializeFid()
+    console.log('🎯 Home component mounted successfully')
+    console.log('🎯 React rendering working')
   }, [])
 
   // Check cache and load cached data if available
@@ -77,12 +60,6 @@ export default function Home() {
     }
     return false // No valid cache
   }, [cache, userFid])
-
-  // Add component mount debugging
-  useEffect(() => {
-    console.log('🎯 Home component mounted successfully')
-    console.log('🎯 React rendering working')
-  }, [])
 
   const fetchRecommendations = React.useCallback(async (fid: number, deep: boolean = false) => {
     try {
@@ -137,7 +114,6 @@ export default function Home() {
           console.log('💾 Warm recommendations cached for future navigation')
         }
         
-        // Frame ready is now called immediately on mount, not here
       } else {
         throw new Error(data.message || 'Failed to get recommendations')
       }
@@ -152,35 +128,9 @@ export default function Home() {
     }
   }, [cache])
 
-  // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
+  // Load data when frame is ready and we have a user FID
   useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
-        await sdk.actions.ready()
-        console.log('✅ Frame ready called successfully - splash screen dismissed')
-        setFrameReady(true)
-      } catch (error) {
-        console.error('❌ Failed to call frame ready:', error)
-        if (error instanceof Error) {
-          console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-          })
-        } else {
-          console.error('Unknown error type:', error)
-        }
-        setFrameReady(true) // Continue anyway to avoid blocking
-      }
-    }
-    
-    initializeFrame()
-  }, []) // Run once on mount - HIGHEST PRIORITY
-
-  // 📊 LOWER PRIORITY: Load data only AFTER frame is ready
-  useEffect(() => {
-    if (!frameReady) {
+    if (!isFrameReady) {
       console.log('⏳ Waiting for frame ready before loading data...')
       return
     }
@@ -195,28 +145,42 @@ export default function Home() {
     } else {
       fetchRecommendations(parseInt(userFid) || 0)
     }
-  }, [frameReady, userFid, fetchRecommendations, loadFromCacheIfValid]) // Only run after frameReady is true
+  }, [isFrameReady, userFid, fetchRecommendations, loadFromCacheIfValid])
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFid = e.target.value
-    setUserFid(newFid)
+    // This function can be removed since we're using auto-FID detection
   }
 
   const handleFidSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    fetchRecommendations(parseInt(userFid) || 0, isDeepAnalysis)
+    // This function can be removed since we're using auto-FID detection
   }
 
   const handleDeepAnalysis = () => {
-    fetchRecommendations(parseInt(userFid) || 0, true)
+    if (userFid) fetchRecommendations(parseInt(userFid), true)
   }
 
   const handleStandardAnalysis = () => {
-    fetchRecommendations(parseInt(userFid) || 0, false)
+    if (userFid) fetchRecommendations(parseInt(userFid), false)
   }
 
   const handleRetry = () => {
-    fetchRecommendations(parseInt(userFid) || 0, isDeepAnalysis)
+    if (userFid) {
+      // Clear cache and retry
+      cache.setCache({ lastAnalyzed: 0 })
+      fetchRecommendations(parseInt(userFid))
+    }
+  }
+
+  // Show loading if frame is not ready
+  if (!isFrameReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <NetworkAnalysisLoader 
+          stage="Initializing Farcaster frame..."
+          progress={0}
+        />
+      </div>
+    )
   }
 
   return (

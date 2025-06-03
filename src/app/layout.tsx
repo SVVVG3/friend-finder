@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "../../components/Nav";
 import { CacheProvider } from "../components/CacheProvider";
+import { FrameProvider } from "../components/FrameProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -106,12 +107,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen text-green-400 overflow-x-hidden w-full pb-20 sm:pb-24`}
       >
-        <CacheProvider>
-          <main className="min-h-screen w-full overflow-x-hidden">
-            {children}
-          </main>
-          <Nav />
-        </CacheProvider>
+        <FrameProvider>
+          <CacheProvider>
+            <main className="min-h-screen w-full overflow-x-hidden">
+              {children}
+            </main>
+            <Nav />
+          </CacheProvider>
+        </FrameProvider>
       </body>
     </html>
   );
