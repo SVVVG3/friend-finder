@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import WarmRecsList from '../../../components/WarmRecsList'
 import { 
+  OnboardingAnalysisLoader, 
   NetworkAnalysisLoader, 
   CRTErrorState, 
   CRTEmptyState
@@ -47,7 +48,7 @@ export default function Home() {
   if (!isFrameReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <NetworkAnalysisLoader 
+        <OnboardingAnalysisLoader 
           stage="Initializing Farcaster frame..."
           progress={0}
         />

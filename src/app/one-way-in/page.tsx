@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { 
-  NetworkAnalysisLoader, 
+  OnboardingAnalysisLoader, 
   CRTErrorState, 
   CRTEmptyState
 } from '../../../components/LoadingStates'
@@ -124,7 +124,7 @@ export default function OneWayInPage() {
   if (!isFrameReady || (isAnalyzing && oneWayIn.length === 0 && analysisStats === null)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <NetworkAnalysisLoader 
+        <OnboardingAnalysisLoader 
           stage={isAnalyzing ? "Running background analysis..." : "Initializing..."} 
         />
       </div>
