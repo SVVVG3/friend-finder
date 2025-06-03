@@ -24,7 +24,9 @@ export default function Home() {
 
   // Check if we have cached warm recs results on load
   useEffect(() => {
-    if (warmRecs.length > 0 || (analysisStats?.warmRecsCount !== undefined && analysisStats.warmRecsCount >= 0)) {
+    // Only consider it attempted if we have actual warm recs OR warmRecsCount > 0
+    // Don't count warmRecsCount = 0 from basic analysis as "attempted"
+    if (warmRecs.length > 0 || (analysisStats?.warmRecsCount !== undefined && analysisStats.warmRecsCount > 0)) {
       setWarmRecsAttempted(true)
     }
   }, [warmRecs.length, analysisStats?.warmRecsCount])
@@ -57,9 +59,6 @@ export default function Home() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
             🔍 FRIEND FINDER
           </h1>
-          <p className="text-green-300 text-base sm:text-lg">
-            Discover warm connections in your Farcaster network
-          </p>
           <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
 
@@ -133,8 +132,8 @@ export default function Home() {
           </>
         )}
 
-        {/* Empty State - Only show if warm recs analysis was run and found nothing */}
-        {!isAnalyzing && !analysisError && warmRecs.length === 0 && analysisStats && analysisStats.warmRecsCount === 0 && warmRecsAttempted && (
+        {/* Empty State - Only show if warm recs analysis was attempted and found nothing */}
+        {!isAnalyzing && !analysisError && warmRecs.length === 0 && warmRecsAttempted && (
           <CRTEmptyState
             icon="🎯"
             title="No Warm Recommendations Found"

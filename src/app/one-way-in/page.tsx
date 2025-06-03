@@ -153,9 +153,6 @@ export default function OneWayInPage() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
               🔍 FRIEND FINDER
             </h1>
-            <p className="text-green-300 text-base sm:text-lg">
-              Discover warm connections in your Farcaster network
-            </p>
             <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
           </div>
 
@@ -164,7 +161,7 @@ export default function OneWayInPage() {
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
               📨 One-Way Followers
             </h2>
-            <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
+            <p className="text-blue-300 mb-6 font-mono text-sm sm:text-base">
               People who follow you but you don&apos;t follow back
             </p>
           </div>
@@ -186,9 +183,6 @@ export default function OneWayInPage() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-wider crt-text-glow">
             🔍 FRIEND FINDER
           </h1>
-          <p className="text-green-300 text-base sm:text-lg">
-            Discover warm connections in your Farcaster network
-          </p>
           <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
 
@@ -197,7 +191,7 @@ export default function OneWayInPage() {
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 font-mono text-green-400 crt-text-glow">
             📨 One-Way Followers
           </h2>
-          <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
+          <p className="text-blue-300 mb-6 font-mono text-sm sm:text-base">
             People who follow you but you don&apos;t follow back
           </p>
         </div>
