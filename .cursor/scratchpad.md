@@ -284,43 +284,55 @@ git push -u origin main
 
 ### 🚨 CRITICAL ISSUE RESOLVED: Mini App Loading Problem (Jan 2025)
 
-**Updated Status: Final Mini App Loading Fixes Applied**
+**Updated Status: CORE LOADING FIXES APPLIED (Jan 3, 2025)**
 
-After thorough investigation using the official Farcaster Mini App specification, we identified and resolved the remaining critical issues:
+After identifying validation failures for both Manifest and Embed, we applied the following CRITICAL fixes to resolve the core loading issues:
 
-**Latest Issues Fixed (Jan 3, 2025):**
+**LATEST CRITICAL FIXES (Jan 3, 2025):**
 
-1. **Invalid Account Association** ❌→✅
-   - **Issue**: Dummy account association was causing "Embed Valid: ❌" error
-   - **Fix**: Removed invalid account association from manifest until proper credentials available
-   - **Result**: Manifest now validates without authentication requirement
+1. **Embed Version Specification Error** ❌→✅
+   - **Issue**: Using `"version": "1"` in embed meta tag (manifest uses "1", embed uses "next")
+   - **Fix**: Changed embed to `"version": "next"` per official specification
+   - **Spec Reference**: Embeds use "next", Manifests use "1" - this was a critical mismatch
 
-2. **Incorrect Frame Meta Tag Format** ❌→✅  
-   - **Issue**: Frame meta tag JSON was not properly formatted according to specification
-   - **Fix**: Updated meta tag to exact specification format with proper button/action structure
-   - **Spec Requirement**: `"fc:frame": JSON.stringify({version, imageUrl, button: {title, action: {type, name, url, splashImageUrl, splashBackgroundColor}}})`
+2. **Enhanced Error Handling & Debugging** ❌→✅
+   - **Issue**: Silent failures in SDK calls making debugging impossible
+   - **Fix**: Added comprehensive console logging and error reporting
+   - **Added**: Real-time debug info display on loading screen
+   - **Added**: Detailed SDK object logging and error details
 
-3. **SDK Ready() Call Optimization** ❌→✅
-   - **Issue**: Complex environment detection was causing delays
-   - **Fix**: Simplified to immediate `sdk.actions.ready()` call without environment checks
-   - **Pattern**: Call ready() → Set state → Delayed redirect (500ms)
-   - **Debugging**: Enhanced console logging for splash screen dismissal
+3. **Missing iconUrl Fixed** ✅
+   - **Confirmed**: Required `iconUrl` field is present in manifest
+   - **Using**: FriendFinderSplashImage.png for both icon and splash
 
 **Technical Changes Applied:**
-- Cleaned manifest: Removed account association, deprecated fields
-- Fixed frame meta tag: Proper JSON structure per specification  
-- Simplified home page: Immediate ready() call with delayed redirect
-- Enhanced debugging: Clear console output for troubleshooting
+- Fixed embed meta tag: Changed version from "1" to "next"
+- Enhanced debugging: Added comprehensive console output and error handling
+- Added visual debug info: Users can see exactly what's happening during load
+- Fixed TypeScript errors: Proper error object typing
 
-**Current Expected Behavior:**
-1. Mini App opens → Splash screen shows ✅
-2. Home page loads → `sdk.actions.ready()` called immediately ✅  
-3. Splash screen dismisses → App becomes interactive ✅
-4. After 500ms delay → Redirect to analysis page ✅
+**Expected Behavior After Fix:**
+1. Manifest Tool validation should improve
+2. Embed validation should pass with correct version
+3. Enhanced console output for easier debugging
+4. Visual feedback during Mini App initialization
+
+**Debug Console Output Now Available:**
+- SDK object details
+- Action call results
+- Error messages with full details
+- Step-by-step loading process
 
 **Test Results Expected:**
-- Manifest Valid: ✅ (no account association needed)
-- Embed Valid: ✅ (proper meta tag format)
-- Mini App loads properly in Farcaster environment
+- Manifest Valid: Should improve with correct manifest structure
+- Embed Valid: Should pass with version "next" 
+- Mini App Loading: Should show detailed debug info in console
+
+### Previous Issues Fixed:
+- Redirect timing conflicts (✅ Fixed)
+- Invalid account association (✅ Removed temporarily)  
+- Frame meta tag format (✅ Fixed)
+- SDK ready() call optimization (✅ Fixed)
+- Missing required manifest fields (✅ Fixed)
 
 ### Previous Lessons 
