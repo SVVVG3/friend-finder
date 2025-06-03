@@ -147,14 +147,6 @@ export default function Home() {
     }
   }, [isFrameReady, userFid, fetchRecommendations, loadFromCacheIfValid])
 
-  const handleFidChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
-    // This function can be removed since we're using auto-FID detection
-  }
-
-  const handleFidSubmit = (_e: React.FormEvent) => {
-    // This function can be removed since we're using auto-FID detection
-  }
-
   const handleDeepAnalysis = () => {
     if (userFid) fetchRecommendations(parseInt(userFid), true)
   }
@@ -198,7 +190,7 @@ export default function Home() {
         </div>
 
         {/* FID Input - Mobile Optimized */}
-        <form onSubmit={handleFidSubmit} className="mb-6 w-full">
+        <form onSubmit={(e) => e.preventDefault()} className="mb-6 w-full">
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 px-2 w-full">
             <label htmlFor="fid" className="text-green-300 text-sm sm:text-base text-center sm:text-left shrink-0">
               Enter FID:
@@ -208,12 +200,13 @@ export default function Home() {
                 type="number"
                 id="fid"
                 value={userFid}
-                onChange={handleFidChange}
+                onChange={() => {}} 
                 className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
                 placeholder="Your FID"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 disabled={loading}
+                readOnly
               />
               <button
                 type="submit"
