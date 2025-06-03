@@ -37,6 +37,7 @@ interface AnalysisState {
 interface AnalysisContextType {
   analysisState: AnalysisState
   startAnalysis: (fid: string) => Promise<void>
+  startWarmRecsAnalysis: (fid: string) => Promise<void>
   getAnalysisData: () => {
     oneWayIn: FarcasterUser[]
     oneWayOut: FarcasterUser[]
@@ -71,6 +72,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     analysisStats: null
   })
 
+  // Basic analysis for one-way follows (automatic on load)
   const startAnalysis = useCallback(async (fid: string) => {
     // Prevent multiple concurrent analyses
     if (analysisState.isAnalyzing) {
@@ -78,13 +80,13 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Check cache first
+    // Check cache first for basic analysis (excluding warm recs)
     if (cache.isCacheValid() && (cache.userFid === fid || !cache.userFid)) {
-      console.log('🎯 Loading complete analysis from cache')
+      console.log('🎯 Loading basic analysis from cache')
       setAnalysisData({
         oneWayIn: cache.oneWayIn || [],
         oneWayOut: cache.oneWayOut || [],
-        warmRecs: cache.warmRecs || [],
+        warmRecs: cache.warmRecs || [], // Include cached warm recs if they exist
         analysisStats: cache.analysisStats || null
       })
       setAnalysisState({
@@ -96,20 +98,20 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    console.log('🚀 Starting background network analysis for FID:', fid)
+    console.log('🚀 Starting background basic analysis for FID:', fid)
     
     setAnalysisState({
       isAnalyzing: true,
       isComplete: false,
       error: null,
-      progress: { step: 'Initializing...', current: 0, total: 4 }
+      progress: { step: 'Initializing...', current: 0, total: 3 }
     })
 
     try {
       // Step 1: Fetch followers using API route
       setAnalysisState(prev => ({
         ...prev,
-        progress: { step: 'Fetching followers...', current: 1, total: 4 }
+        progress: { step: 'Fetching followers...', current: 1, total: 3 }
       }))
       
       const followersResponse = await fetch(`/api/followers?fid=${fid}`)
@@ -125,7 +127,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       // Step 2: Fetch following using API route
       setAnalysisState(prev => ({
         ...prev,
-        progress: { step: 'Fetching following...', current: 2, total: 4 }
+        progress: { step: 'Fetching following...', current: 2, total: 3 }
       }))
       
       const followingResponse = await fetch(`/api/following?fid=${fid}`)
@@ -138,10 +140,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         throw new Error('Invalid following response from API')
       }
 
-      // Step 3: Calculate relationships
+      // Step 3: Calculate basic relationships (one-way follows only)
       setAnalysisState(prev => ({
         ...prev,
-        progress: { step: 'Analyzing relationships...', current: 3, total: 4 }
+        progress: { step: 'Analyzing relationships...', current: 3, total: 3 }
       }))
 
       const followers: FarcasterUser[] = followersData.followers || []
@@ -160,43 +162,30 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         .filter((user: FarcasterUser) => !followerFids.has(user.fid))
         .sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
 
-      // Calculate warm recommendations (simplified for now)
-      const warmRecs: FarcasterUser[] = []
-      
-      // For warm recs, we'd need to fetch networks of mutual follows
-      // This would be a more complex analysis involving 2nd-degree connections
-
-      // Step 4: Save to cache and state
-      setAnalysisState(prev => ({
-        ...prev,
-        progress: { step: 'Saving results...', current: 4, total: 4 }
-      }))
-
       const analysisStats: AnalysisStats = {
         totalFollowing: following.length,
         totalFollowers: followers.length,
         oneWayInCount: oneWayIn.length,
         oneWayOutCount: oneWayOut.length,
-        warmRecsCount: warmRecs.length,
-        totalCandidates: oneWayIn.length + oneWayOut.length + warmRecs.length
+        warmRecsCount: 0, // Not calculated in basic analysis
+        totalCandidates: oneWayIn.length + oneWayOut.length
       }
 
       const completedData = {
         oneWayIn,
         oneWayOut,
-        warmRecs,
+        warmRecs: [], // Empty - not calculated in basic analysis
         analysisStats
       }
 
-      // Save to cache using existing cache structure
-      // Note: warmRecs is empty for now since we're not implementing full warm recs analysis
+      // Save basic analysis to cache (warmRecs still empty)
       cache.setCache({
         userFid: fid,
         followers,
         following,
         oneWayIn,
         oneWayOut,
-        warmRecs: [], // Empty array that matches expected UserWithMutuals[] type
+        warmRecs: [], // Empty for basic analysis
         analysisStats
       })
 
@@ -210,14 +199,14 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         progress: null
       })
 
-      console.log('✅ Background analysis complete:', {
+      console.log('✅ Basic analysis complete:', {
         oneWayIn: oneWayIn.length,
         oneWayOut: oneWayOut.length,
-        warmRecs: warmRecs.length
+        warmRecs: 0
       })
 
     } catch (error) {
-      console.error('❌ Background analysis failed:', error)
+      console.error('❌ Basic analysis failed:', error)
       setAnalysisState({
         isAnalyzing: false,
         isComplete: false,
@@ -227,11 +216,90 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     }
   }, [cache, analysisState.isAnalyzing])
 
+  // Separate warm recommendations analysis (manual trigger only)
+  const startWarmRecsAnalysis = useCallback(async (fid: string) => {
+    console.log('🌟 Starting warm recommendations analysis for FID:', fid)
+    
+    setAnalysisState({
+      isAnalyzing: true,
+      isComplete: false,
+      error: null,
+      progress: { step: 'Analyzing warm connections...', current: 1, total: 1 }
+    })
+
+    try {
+      const response = await fetch(`/api/recs?fid=${fid}&limit=50&debug=true&deep=true`)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch warm recommendations: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to get recommendations')
+      }
+
+      const warmRecs = data.recommendations || []
+      
+      // Update analysis data with warm recs
+      setAnalysisData(prev => ({
+        ...prev,
+        warmRecs,
+        analysisStats: {
+          ...prev.analysisStats,
+          warmRecsCount: warmRecs.length,
+          totalCandidates: (prev.analysisStats?.oneWayInCount || 0) + 
+                          (prev.analysisStats?.oneWayOutCount || 0) + 
+                          warmRecs.length
+        } as AnalysisStats
+      }))
+
+      // Update cache with warm recs
+      cache.setCache({
+        userFid: fid,
+        followers: cache.followers,
+        following: cache.following,
+        oneWayIn: cache.oneWayIn,
+        oneWayOut: cache.oneWayOut,
+        warmRecs,
+        analysisStats: {
+          totalFollowing: cache.analysisStats?.totalFollowing || 0,
+          totalFollowers: cache.analysisStats?.totalFollowers || 0,
+          oneWayInCount: cache.analysisStats?.oneWayInCount || 0,
+          oneWayOutCount: cache.analysisStats?.oneWayOutCount || 0,
+          warmRecsCount: warmRecs.length,
+          totalCandidates: (cache.analysisStats?.oneWayInCount || 0) + 
+                          (cache.analysisStats?.oneWayOutCount || 0) + 
+                          warmRecs.length
+        }
+      })
+      
+      setAnalysisState({
+        isAnalyzing: false,
+        isComplete: true,
+        error: null,
+        progress: null
+      })
+
+      console.log('✅ Warm recommendations analysis complete:', warmRecs.length)
+
+    } catch (error) {
+      console.error('❌ Warm recommendations analysis failed:', error)
+      setAnalysisState({
+        isAnalyzing: false,
+        isComplete: false,
+        error: error instanceof Error ? error.message : 'Warm recommendations analysis failed',
+        progress: null
+      })
+    }
+  }, [cache])
+
   const getAnalysisData = useCallback(() => {
     return analysisData
   }, [analysisData])
 
-  // Auto-start analysis when frame is ready and we have a user FID
+  // Auto-start BASIC analysis only when frame is ready and we have a user FID
   useEffect(() => {
     if (isFrameReady && userFid && !analysisState.isAnalyzing && !analysisState.isComplete) {
       startAnalysis(userFid)
@@ -242,6 +310,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     <AnalysisContext.Provider value={{
       analysisState,
       startAnalysis,
+      startWarmRecsAnalysis,
       getAnalysisData
     }}>
       {children}

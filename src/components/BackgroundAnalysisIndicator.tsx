@@ -40,13 +40,14 @@ export function BackgroundAnalysisIndicator() {
 }
 
 export function useBackgroundAnalysis() {
-  const { analysisState, getAnalysisData } = useAnalysis()
+  const { analysisState, getAnalysisData, startWarmRecsAnalysis } = useAnalysis()
   
   return {
     isAnalyzing: analysisState.isAnalyzing,
     isComplete: analysisState.isComplete,
     error: analysisState.error,
     progress: analysisState.progress,
-    data: getAnalysisData()
+    data: getAnalysisData(),
+    startWarmRecsAnalysis
   }
 } 
