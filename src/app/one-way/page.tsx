@@ -20,13 +20,11 @@ export default function OneWayPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userFid, setUserFid] = useState<string>('')
-  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
     mutualConnections: number
   } | null>(null)
-  const [loadingStage, setLoadingStage] = useState('Initializing...')
 
   // Initialize user FID from Farcaster SDK
   useEffect(() => {
@@ -59,7 +57,6 @@ export default function OneWayPage() {
         console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
         console.log('✅ Frame ready called successfully - splash screen dismissed')
-        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
       }
@@ -268,7 +265,7 @@ export default function OneWayPage() {
           <div className="loading-overlay">
             <div className="loading-content">
               <div className="spinner"></div>
-              <p>{loadingStage}</p>
+              <p>Initializing...</p>
               <p className="loading-detail">Fetching complete follower and following data across multiple pages</p>
             </div>
           </div>
