@@ -147,11 +147,11 @@ export default function Home() {
     }
   }, [isFrameReady, userFid, fetchRecommendations, loadFromCacheIfValid])
 
-  const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFidChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     // This function can be removed since we're using auto-FID detection
   }
 
-  const handleFidSubmit = (e: React.FormEvent) => {
+  const handleFidSubmit = (_e: React.FormEvent) => {
     // This function can be removed since we're using auto-FID detection
   }
 
