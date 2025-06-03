@@ -6,67 +6,44 @@ import { sdk } from '@farcaster/frame-sdk'
 
 export default function HomePage() {
   const router = useRouter()
-  const [frameReady, setFrameReady] = useState(false)
-  const [isInMiniApp, setIsInMiniApp] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
     const initializeFrame = async () => {
       try {
-        console.log('🚀 HOME PAGE: Initializing frame...')
+        console.log('🚀 HOME PAGE: Calling sdk.actions.ready() to dismiss splash screen')
         
-        // Check if we're in a Mini App environment
-        const inMiniApp = sdk ? await sdk.isInMiniApp() : false
-        setIsInMiniApp(inMiniApp)
+        // Call ready immediately to dismiss splash screen
+        await sdk.actions.ready()
+        console.log('✅ Frame ready called successfully - splash screen should be dismissed')
         
-        console.log(`📱 Mini App Environment: ${inMiniApp}`)
+        setIsReady(true)
         
-        if (inMiniApp) {
-          console.log('🚀 Calling frame ready in Mini App environment')
-          await sdk.actions.ready()
-          console.log('✅ Frame ready called successfully - splash screen dismissed')
-        } else {
-          console.log('🌐 Running in browser environment - skipping ready() call')
-        }
+        // Wait a moment to ensure ready() has taken effect, then redirect
+        setTimeout(() => {
+          console.log('📍 Redirecting to one-way-in page...')
+          router.push('/one-way-in')
+        }, 500)
         
-        setFrameReady(true)
       } catch (error) {
-        console.error('❌ Failed to call frame ready from home page:', error)
-        console.error('Error details:', {
-          name: error instanceof Error ? error.name : 'Unknown',
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        })
-        setFrameReady(true) // Continue anyway to avoid blocking
+        console.error('❌ Failed to call frame ready:', error)
+        // Still redirect even if ready() fails
+        setTimeout(() => {
+          router.push('/one-way-in')
+        }, 1000)
       }
     }
-    
-    initializeFrame()
-  }, []) // Run once on mount - HIGHEST PRIORITY
 
-  // Only redirect AFTER frame is ready
-  useEffect(() => {
-    if (frameReady) {
-      console.log('📍 Frame ready, now redirecting to one-way-in...')
-      // Small delay to ensure frame ready is fully processed
-      setTimeout(() => {
-        router.replace('/one-way-in')
-      }, 100)
-    }
-  }, [frameReady, router])
+    initializeFrame()
+  }, [router])
 
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono flex items-center justify-center">
+    <div className="min-h-screen bg-black text-green-400 flex items-center justify-center">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mb-4"></div>
-        <p className="text-green-600 mb-2">🚀 Initializing Friend Finder...</p>
-        <p className="text-green-500 text-sm">
-          {frameReady ? 'Redirecting to analysis...' : 'Setting up mini app...'}
-        </p>
-        {/* Debug info */}
-        <div className="mt-4 text-xs text-green-600">
-          <p>Environment: {isInMiniApp ? 'Mini App' : 'Browser'}</p>
-          <p>Status: {frameReady ? 'Ready' : 'Initializing...'}</p>
+        <div className="text-2xl font-mono mb-4">🔍 Friend Finder</div>
+        <div className="text-sm font-mono opacity-70">
+          {isReady ? 'Loading network analysis...' : 'Initializing mini app...'}
         </div>
       </div>
     </div>

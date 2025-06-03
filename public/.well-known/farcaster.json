@@ -1,16 +1,9 @@
 {
-  "accountAssociation": {
-    "header": "eyJmaWQiOjQ2NjExMSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVlZDBlMTYyNmI3MWZlMzE1YjFmODNmZDIzZDZkY2QzZTZjZDM4ZjAifQ",
-    "payload": "eyJkb21haW4iOiJmYXJjYXN0ZXItZnJpZW5kLWZpbmRlci52ZXJjZWwuYXBwIn0",
-    "signature": "MHhmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm"
-  },
   "frame": {
     "version": "1",
     "name": "Friend Finder",
     "homeUrl": "https://farcaster-friend-finder.vercel.app",
     "iconUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
-    "imageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
-    "buttonTitle": "🔍 Analyze Network",
     "splashImageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
     "splashBackgroundColor": "#000000"
   }

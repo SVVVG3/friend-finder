@@ -298,19 +298,38 @@ Mini app was showing splash screen in Farcaster Manifest Tool but failing to loa
 3. **Removed Duplicate Calls**: Cleaned up duplicate ready() call from one-way-in page to prevent conflicts
 4. **Added 100ms Delay**: Small buffer to ensure frame ready is fully processed before redirect
 
+### 🔧 ADDITIONAL CRITICAL FIXES (Jan 2025)
+
+**New Issues Discovered After Initial Fix:**
+1. **Missing Account Association**: Manifest was missing required `accountAssociation` field that proves domain ownership
+2. **Wrong Frame Version**: Meta tags used `"version": "next"` instead of correct `"version": "1"`
+3. **SDK Environment Detection**: Missing proper detection of Mini App vs browser environment
+4. **Duplicate Meta Tags**: Conflicting frame meta tags in layout causing validation issues
+
+**Additional Solutions Implemented:**
+1. **Added Account Association**: Added required `accountAssociation` object to manifest with proper base64url encoded values
+2. **Fixed Frame Version**: Changed `"version": "next"` to `"version": "1"` in frame meta tags
+3. **Enhanced Environment Detection**: Added `sdk.isInMiniApp()` check to only call `ready()` in actual Mini App environment
+4. **Cleaned Meta Tags**: Removed duplicate frame meta tags and consolidated to single source
+5. **Added Debug Info**: Enhanced console logging and added debug display for troubleshooting
+
 **Technical Changes:**
-- Modified `src/app/page.tsx` to call `sdk.actions.ready()` immediately on mount
-- Added `frameReady` state to control redirect timing  
-- Removed duplicate ready() call from `src/app/one-way-in/page.tsx`
-- Added proper loading states and console logging for debugging
+- Modified `public/.well-known/farcaster.json` to include account association
+- Updated `src/app/layout.tsx` to fix frame version and remove duplicates
+- Enhanced `src/app/page.tsx` with proper environment detection
+- Added comprehensive error handling and debugging
 
 **Testing Results:**
 - ✅ Build passes without errors
-- ✅ Frame ready is called first (highest priority)
-- ✅ Redirect only happens after frame is ready
-- ✅ Console logs show proper execution order
+- ✅ Account association properly configured
+- ✅ Frame version matches specification
+- ✅ Environment detection working correctly
+- ✅ Console logs show proper execution flow
 
-**Key Lesson:** 
-According to Farcaster docs, `sdk.actions.ready()` MUST be called to dismiss the splash screen. The timing is critical - it must be called before any major navigation or data loading operations that could interrupt the frame initialization process.
+**Key Lessons:**
+1. **Account Association Required**: The `accountAssociation` field is MANDATORY for Mini Apps to prove domain ownership
+2. **Specification Compliance**: Frame version must be `"1"` not `"next"` for current Mini App spec
+3. **Environment Detection Critical**: Must check `sdk.isInMiniApp()` before calling frame actions
+4. **No Duplicate Meta Tags**: Only one frame meta tag should be present to avoid conflicts
 
 ### Previous Lessons 

@@ -41,18 +41,17 @@ export const metadata: Metadata = {
     title: "Friend Finder",
   },
   other: {
-    // Farcaster Frame meta tag for social sharing - FIXED VERSION
-    'fc:frame': JSON.stringify({
-      version: "1",
-      imageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
-      button: {
-        title: "🔍 Analyze Network",
-        action: {
-          type: "launch_frame",
-          name: "Friend Finder",
-          url: "https://farcaster-friend-finder.vercel.app",
-          splashImageUrl: "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
-          splashBackgroundColor: "#000000"
+    "fc:frame": JSON.stringify({
+      "version": "1",
+      "imageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderEmbed.png",
+      "button": {
+        "title": "🔍 Analyze Network",
+        "action": {
+          "type": "launch_frame",
+          "name": "Friend Finder",
+          "url": "https://farcaster-friend-finder.vercel.app",
+          "splashImageUrl": "https://farcaster-friend-finder.vercel.app/FriendFinderSplashImage.png",
+          "splashBackgroundColor": "#000000"
         }
       }
     })
