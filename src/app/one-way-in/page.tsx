@@ -9,6 +9,7 @@ import {
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
+import { sdk } from '@farcaster/frame-sdk'
 
 interface FarcasterUser {
   fid: number
@@ -110,7 +111,7 @@ export default function OneWayInPage() {
   const [oneWayIn, setOneWayIn] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('466111')
+  const [userFid, setUserFid] = useState<string>('')
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
@@ -118,13 +119,37 @@ export default function OneWayInPage() {
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
+  // Initialize user FID from Farcaster SDK
+  useEffect(() => {
+    const initializeFid = async () => {
+      try {
+        const context = await sdk.context
+        const currentUserFid = context.user.fid
+        if (currentUserFid) {
+          console.log(`🔍 Using current user's FID: ${currentUserFid}`)
+          setUserFid(currentUserFid.toString())
+        } else {
+          console.log('⚠️ No user FID available from SDK context')
+          // Fallback to allow manual input
+          setUserFid('')
+        }
+      } catch (err) {
+        console.error('❌ Failed to get user FID from SDK:', err)
+        // Fallback to allow manual input
+        setUserFid('')
+      }
+    }
+
+    initializeFid()
+  }, [])
+
   // Calculate one-way IN relationships only
   const calculateOneWayIn = React.useCallback((
     following: FarcasterUser[], 
     followers: FarcasterUser[]
   ) => {
     const followingFids = new Set(following.map(u => u.fid))
-    // One-way in: People who follow you but you don&apos;t follow back
+    // One-way in: People who follow you but you don't follow back
     const oneWayInUsers = followers.filter(user => !followingFids.has(user.fid))
     
     // Sort by follower count (highest first) to show most influential accounts at top

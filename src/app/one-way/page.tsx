@@ -19,12 +19,38 @@ export default function OneWayPage() {
   const [oneWayIn, setOneWayIn] = useState<OneWayUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<string>('466111')
+  const [userFid, setUserFid] = useState<string>('')
+  const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
     mutualConnections: number
   } | null>(null)
+  const [loadingStage, setLoadingStage] = useState('Initializing...')
+
+  // Initialize user FID from Farcaster SDK
+  useEffect(() => {
+    const initializeFid = async () => {
+      try {
+        const context = await sdk.context
+        const currentUserFid = context.user.fid
+        if (currentUserFid) {
+          console.log(`🔍 Using current user's FID: ${currentUserFid}`)
+          setUserFid(currentUserFid.toString())
+        } else {
+          console.log('⚠️ No user FID available from SDK context')
+          // Fallback to allow manual input
+          setUserFid('')
+        }
+      } catch (err) {
+        console.error('❌ Failed to get user FID from SDK:', err)
+        // Fallback to allow manual input
+        setUserFid('')
+      }
+    }
+
+    initializeFid()
+  }, [])
 
   // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
@@ -33,6 +59,7 @@ export default function OneWayPage() {
         console.log('🚀 PRIORITY 1: Calling frame ready FIRST')
         await sdk.actions.ready()
         console.log('✅ Frame ready called successfully - splash screen dismissed')
+        setFrameReady(true)
       } catch (error) {
         console.error('❌ Failed to call frame ready:', error)
       }
@@ -241,7 +268,7 @@ export default function OneWayPage() {
           <div className="loading-overlay">
             <div className="loading-content">
               <div className="spinner"></div>
-              <p>Analyzing follow relationships...</p>
+              <p>{loadingStage}</p>
               <p className="loading-detail">Fetching complete follower and following data across multiple pages</p>
             </div>
           </div>

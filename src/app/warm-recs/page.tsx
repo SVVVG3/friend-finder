@@ -15,21 +15,40 @@ export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<number>(466111) // Your FID
+  const [userFid, setUserFid] = useState<number>(0)
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
   const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
+    totalMutualConnections: number
     totalRecommendations: number
-    processingTime: number
-    processingTimeMs: number
-    analyzedAccounts?: number
-    totalFollowing?: number
-    totalCandidates?: number
-    deepAnalysis?: boolean
-    minMutuals?: number
+    avgConnectionsPerRec: number
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
+
+  // Initialize user FID from Farcaster SDK
+  useEffect(() => {
+    const initializeFid = async () => {
+      try {
+        const context = await sdk.context
+        const currentUserFid = context.user.fid
+        if (currentUserFid) {
+          console.log(`🔍 Using current user's FID: ${currentUserFid}`)
+          setUserFid(currentUserFid)
+        } else {
+          console.log('⚠️ No user FID available from SDK context')
+          // Fallback to allow manual input
+          setUserFid(0)
+        }
+      } catch (err) {
+        console.error('❌ Failed to get user FID from SDK:', err)
+        // Fallback to allow manual input
+        setUserFid(0)
+      }
+    }
+
+    initializeFid()
+  }, [])
 
   // Add component mount debugging
   useEffect(() => {
@@ -129,7 +148,7 @@ export default function Home() {
   }, [frameReady, userFid, fetchRecommendations]) // Only run after frameReady is true
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFid = parseInt(e.target.value) || 466111
+    const newFid = parseInt(e.target.value) || 0
     setUserFid(newFid)
   }
 
