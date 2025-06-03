@@ -72,6 +72,99 @@ User feedback indicates the app needs significant mobile UX improvements. Analys
 
 This fix ensures the Mini App will properly embed in Farcaster feeds and validate correctly in the Farcaster development tools.
 
+### 🚀 Background Analysis System for Impatient Users ✅
+
+**USER CONCERN ADDRESSED**: "What about when a user gets impatient and starts clicking through tabs? Can we make it so our initial API calls still run in the background no matter what tab/page they click to?"
+
+**PROBLEM**: 
+- Users clicking through tabs while analysis is running could trigger multiple concurrent API calls
+- Poor UX with loading states not synchronized across pages  
+- Potential rate limiting and performance issues
+- Cache conflicts from multiple analyses running simultaneously
+
+**SOLUTION IMPLEMENTED**: **Global Background Analysis Manager**
+
+**Technical Architecture:**
+
+1. **AnalysisProvider Component** (`src/components/AnalysisProvider.tsx`):
+   ```typescript
+   // Centralized analysis state management
+   - Single analysis operation runs globally
+   - Prevents duplicate API calls with isAnalyzing guard
+   - Shares analysis state across all pages
+   - Auto-starts when frame is ready
+   - Progress tracking with 4-step process
+   ```
+
+2. **BackgroundAnalysisIndicator Component** (`src/components/BackgroundAnalysisIndicator.tsx`):
+   ```typescript
+   // Global progress indicator
+   - Fixed position progress bar visible on all pages
+   - Shows current step and progress percentage
+   - Auto-hides when analysis complete
+   - CRT-styled progress visualization
+   ```
+
+3. **Provider Hierarchy** (Updated in `layout.tsx`):
+   ```typescript
+   <FrameProvider>      // Frame ready management
+     <CacheProvider>    // Data caching
+       <AnalysisProvider>  // Background analysis ✅ NEW
+         <BackgroundAnalysisIndicator />  // Progress UI ✅ NEW
+         {children}
+       </AnalysisProvider>
+     </CacheProvider>
+   </FrameProvider>
+   ```
+
+**User Experience Benefits:**
+
+✅ **Analysis Persistence**: Single analysis runs regardless of navigation
+✅ **Visual Feedback**: Progress bar shows current step across all pages  
+✅ **No Duplicate Calls**: Guard prevents multiple concurrent analyses
+✅ **Instant Navigation**: Users can click through tabs while analysis runs
+✅ **Cache Integration**: Completed analysis populates shared cache
+✅ **Error Handling**: Global error state shared across pages
+
+**Implementation Details:**
+
+**Analysis Flow:**
+1. **Step 1**: Fetch followers via API route (/api/followers)
+2. **Step 2**: Fetch following via API route (/api/following)  
+3. **Step 3**: Calculate relationships (oneWayIn, oneWayOut)
+4. **Step 4**: Save to cache and update all page states
+
+**Page Integration** (Updated `one-way-in/page.tsx`):
+```typescript
+// Before: Each page ran its own analysis
+const analyzeOneWayIn = async (fid) => { /* individual analysis */ }
+
+// After: Pages subscribe to global analysis
+const { isAnalyzing, isComplete, error, data } = useBackgroundAnalysis()
+const oneWayIn = data.oneWayIn  // Shared data
+```
+
+**Race Condition Prevention:**
+- ✅ Global `isAnalyzing` flag prevents duplicate analyses
+- ✅ Cache-first loading still works for instant results
+- ✅ Progress state synchronized across all pages
+- ✅ Error states shared and handled globally
+
+**Expected User Behavior:**
+1. **App loads** → Background analysis starts automatically
+2. **User clicks tabs** → Progress bar continues, no new API calls
+3. **Analysis completes** → All pages instantly populate with data
+4. **Subsequent visits** → Cache-first loading for instant results
+
+**Status:**
+- ✅ AnalysisProvider implemented and deployed
+- ✅ BackgroundAnalysisIndicator with progress tracking
+- ✅ one-way-in page updated to use background system
+- 🔄 **Next**: Update remaining pages (one-way-out, warm-recs) to use background system
+- 🎯 **Result**: Impatient users can navigate freely while analysis runs smoothly
+
+This solves the core UX problem of users clicking through tabs during analysis, ensuring a smooth experience regardless of user behavior patterns.
+
 ### Mobile Optimization Analysis
 
 **Current Issues Identified:**

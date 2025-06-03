@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { 
   NetworkAnalysisLoader, 
   CRTErrorState, 
-  CRTEmptyState,
-  CRTCardSkeleton
+  CRTEmptyState
 } from '../../../components/LoadingStates'
-import { useCache } from '../../components/CacheProvider'
 import { useFrame } from '../../components/FrameProvider'
 import { useBackgroundAnalysis } from '../../components/BackgroundAnalysisIndicator'
 
@@ -109,9 +107,6 @@ function OneWayInCard({
 }
 
 export default function OneWayInPage() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   // Get frame state and background analysis data
   const { isFrameReady } = useFrame()
   const { isAnalyzing, isComplete, error: analysisError, data } = useBackgroundAnalysis()
@@ -158,7 +153,7 @@ export default function OneWayInPage() {
               📨 One-Way Followers
             </h1>
             <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
-              People who follow you but you don't follow back
+              People who follow you but you don&apos;t follow back
             </p>
           </div>
           
@@ -180,7 +175,7 @@ export default function OneWayInPage() {
             📨 One-Way Followers
           </h1>
           <p className="text-green-300 mb-6 font-mono text-sm sm:text-base">
-            People who follow you but you don't follow back
+            People who follow you but you don&apos;t follow back
           </p>
         </div>
 
@@ -222,7 +217,7 @@ export default function OneWayInPage() {
         {/* Results Summary */}
         <div className="mt-6 p-4 bg-green-400/5 border border-green-400 rounded-lg text-center crt-glow">
           <p className="text-green-400 font-mono text-sm">
-            Found {oneWayIn.length} people who follow you but you don't follow back
+            Found {oneWayIn.length} people who follow you but you don&apos;t follow back
           </p>
         </div>
       </div>
