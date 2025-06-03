@@ -20,7 +20,6 @@ interface AnalysisStats {
   oneWayInCount?: number
   oneWayOutCount?: number
   warmRecsCount?: number
-  totalCandidates?: number
 }
 
 interface AnalysisState {
@@ -167,8 +166,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         totalFollowers: followers.length,
         oneWayInCount: oneWayIn.length,
         oneWayOutCount: oneWayOut.length,
-        warmRecsCount: 0, // Not calculated in basic analysis
-        totalCandidates: oneWayIn.length + oneWayOut.length
+        warmRecsCount: 0 // Not calculated in basic analysis
       }
 
       const completedData = {
@@ -249,9 +247,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         analysisStats: {
           ...prev.analysisStats,
           warmRecsCount: warmRecs.length,
-          totalCandidates: (prev.analysisStats?.oneWayInCount || 0) + 
-                          (prev.analysisStats?.oneWayOutCount || 0) + 
-                          warmRecs.length
         } as AnalysisStats
       }))
 
@@ -268,10 +263,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
           totalFollowers: cache.analysisStats?.totalFollowers || 0,
           oneWayInCount: cache.analysisStats?.oneWayInCount || 0,
           oneWayOutCount: cache.analysisStats?.oneWayOutCount || 0,
-          warmRecsCount: warmRecs.length,
-          totalCandidates: (cache.analysisStats?.oneWayInCount || 0) + 
-                          (cache.analysisStats?.oneWayOutCount || 0) + 
-                          warmRecs.length
+          warmRecsCount: warmRecs.length
         }
       })
       
