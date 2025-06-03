@@ -25,6 +25,14 @@ interface UserWithMutuals {
   mutualConnections: FarcasterUser[]
 }
 
+interface AnalysisStats {
+  totalFollowing: number
+  totalFollowers: number
+  oneWayInCount?: number
+  oneWayOutCount?: number
+  warmRecsCount?: number
+}
+
 // Cache context type
 interface CacheContextType {
   userFid: string
@@ -33,7 +41,7 @@ interface CacheContextType {
   oneWayIn: FarcasterUser[]
   oneWayOut: FarcasterUser[]
   warmRecs: UserWithMutuals[]
-  analysisStats: any
+  analysisStats: AnalysisStats | null
   lastAnalyzed: number
   setCache: (data: Partial<CacheContextType>) => void
   isCacheValid: () => boolean
@@ -69,7 +77,7 @@ export function CacheProvider({ children }: { children: ReactNode }) {
     oneWayIn: cache.oneWayIn || [],
     oneWayOut: cache.oneWayOut || [],
     warmRecs: cache.warmRecs || [],
-    analysisStats: cache.analysisStats,
+    analysisStats: cache.analysisStats || null,
     lastAnalyzed: cache.lastAnalyzed || 0,
     setCache: updateCache,
     isCacheValid
