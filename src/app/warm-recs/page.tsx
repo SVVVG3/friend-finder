@@ -6,16 +6,16 @@ import { UserWithMutuals } from '../../../utils/sort'
 import { 
   NetworkAnalysisLoader, 
   CRTErrorState, 
-  LoadingButton,
   CRTEmptyState
 } from '../../../components/LoadingStates'
 import { sdk } from '@farcaster/frame-sdk'
+import { useCache } from '../../components/CacheProvider'
 
 export default function Home() {
   const [recommendations, setRecommendations] = useState<UserWithMutuals[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<number>(0)
+  const [userFid, setUserFid] = useState<string>('')
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false)
   const [frameReady, setFrameReady] = useState(false)
   const [analysisStats, setAnalysisStats] = useState<{
@@ -31,6 +31,9 @@ export default function Home() {
   const [loadingStage, setLoadingStage] = useState('Initializing...')
   const [loadingProgress, setLoadingProgress] = useState(0)
 
+  // Get cache functions
+  const cache = useCache()
+
   // Initialize user FID from Farcaster SDK
   useEffect(() => {
     const initializeFid = async () => {
@@ -39,21 +42,41 @@ export default function Home() {
         const currentUserFid = context.user.fid
         if (currentUserFid) {
           console.log(`🔍 Using current user's FID: ${currentUserFid}`)
-          setUserFid(currentUserFid)
+          setUserFid(currentUserFid.toString())
         } else {
           console.log('⚠️ No user FID available from SDK context')
-          // Fallback to allow manual input
-          setUserFid(0)
+          setUserFid('')
         }
       } catch (err) {
         console.error('❌ Failed to get user FID from SDK:', err)
-        // Fallback to allow manual input
-        setUserFid(0)
+        setUserFid('')
       }
     }
 
     initializeFid()
   }, [])
+
+  // Check cache and load cached data if available
+  const loadFromCacheIfValid = React.useCallback(() => {
+    if (cache.isCacheValid() && cache.userFid === userFid) {
+      console.log('🔄 Loading warm recs from cache - valid data found')
+      
+      // Use cached data
+      setRecommendations(cache.warmRecs)
+      // For stats, use basic info since warm recs may not have detailed stats
+      if (cache.analysisStats) {
+        setAnalysisStats({
+          totalRecommendations: cache.warmRecs.length,
+          processingTime: 0,
+          processingTimeMs: 0,
+          analyzedAccounts: cache.analysisStats.totalFollowing || 0
+        })
+      }
+      
+      return true // Cache was used
+    }
+    return false // No valid cache
+  }, [cache, userFid])
 
   // Add component mount debugging
   useEffect(() => {
@@ -149,29 +172,29 @@ export default function Home() {
     }
     
     console.log('📊 Frame is ready, now loading data...')
-    fetchRecommendations(userFid)
+    fetchRecommendations(parseInt(userFid) || 0)
   }, [frameReady, userFid, fetchRecommendations]) // Only run after frameReady is true
 
   const handleFidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFid = parseInt(e.target.value) || 0
+    const newFid = e.target.value
     setUserFid(newFid)
   }
 
   const handleFidSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchRecommendations(userFid, isDeepAnalysis)
+    fetchRecommendations(parseInt(userFid) || 0, isDeepAnalysis)
   }
 
   const handleDeepAnalysis = () => {
-    fetchRecommendations(userFid, true)
+    fetchRecommendations(parseInt(userFid) || 0, true)
   }
 
   const handleStandardAnalysis = () => {
-    fetchRecommendations(userFid, false)
+    fetchRecommendations(parseInt(userFid) || 0, false)
   }
 
   const handleRetry = () => {
-    fetchRecommendations(userFid, isDeepAnalysis)
+    fetchRecommendations(parseInt(userFid) || 0, isDeepAnalysis)
   }
 
   return (
@@ -206,14 +229,13 @@ export default function Home() {
                 pattern="[0-9]*"
                 disabled={loading}
               />
-              <LoadingButton
+              <button
                 type="submit"
-                loading={loading}
                 disabled={loading}
                 className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
               >
                 Analyze
-              </LoadingButton>
+              </button>
             </div>
           </div>
         </form>
@@ -221,9 +243,8 @@ export default function Home() {
         {/* Analysis Mode Controls - Mobile Optimized */}
         <div className="mb-6 text-center px-2 w-full">
           <div className="inline-flex gap-1 sm:gap-2 bg-gray-900 p-1 rounded-lg border border-green-600 w-full max-w-md sm:max-w-none sm:w-auto crt-glow">
-            <LoadingButton
+            <button
               onClick={handleStandardAnalysis}
-              loading={loading}
               disabled={loading}
               className={`px-3 sm:px-4 py-2 sm:py-2 rounded-md transition-colors text-xs sm:text-sm flex-1 sm:flex-none min-h-[44px] whitespace-nowrap ${
                 !isDeepAnalysis && !loading
@@ -232,10 +253,9 @@ export default function Home() {
               }`}
             >
               Standard<span className="hidden sm:inline"> Analysis</span>
-            </LoadingButton>
-            <LoadingButton
+            </button>
+            <button
               onClick={handleDeepAnalysis}
-              loading={loading}
               disabled={loading}
               className={`px-3 sm:px-4 py-2 sm:py-2 rounded-md transition-colors text-xs sm:text-sm flex-1 sm:flex-none min-h-[44px] whitespace-nowrap ${
                 isDeepAnalysis && !loading
@@ -244,7 +264,7 @@ export default function Home() {
               }`}
             >
               🚀 Deep<span className="hidden sm:inline"> Analysis</span>
-            </LoadingButton>
+            </button>
           </div>
           <p className="text-xs text-green-600 mt-2 max-w-sm sm:max-w-none mx-auto leading-relaxed">
             {isDeepAnalysis 
@@ -322,13 +342,13 @@ export default function Home() {
                 {/* Show more button if we hit the limit */}
                 {recommendations.length >= 50 && !isDeepAnalysis && (
                   <div className="text-center mt-6">
-                    <LoadingButton
+                    <button
                       onClick={handleDeepAnalysis}
-                      loading={loading}
+                      disabled={loading}
                       className="bg-green-900 hover:bg-green-800 text-green-400 px-6 py-3 rounded-lg border border-green-600 transition-colors font-bold crt-glow hover:crt-glow-strong"
                     >
                       🚀 Find More with Deep Analysis
-                    </LoadingButton>
+                    </button>
                     <p className="text-xs text-green-600 mt-2">
                       Analyze your full network for stronger connections
                     </p>

@@ -5,17 +5,17 @@ import Image from 'next/image'
 import { 
   NetworkAnalysisLoader, 
   CRTErrorState, 
-  LoadingButton,
   CRTEmptyState,
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
 import { sdk } from '@farcaster/frame-sdk'
+import { useCache } from '../../components/CacheProvider'
 
 interface FarcasterUser {
   fid: number
   username: string
   displayName: string
-  pfpUrl: string
+  pfpUrl?: string
   followerCount: number
   followingCount: number
   bio?: string
@@ -115,13 +115,16 @@ export default function OneWayOutPage() {
   const [oneWayOut, setOneWayOut] = useState<FarcasterUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userFid, setUserFid] = useState<number>(0)
+  const [userFid, setUserFid] = useState<string>('')
   const [analysisStats, setAnalysisStats] = useState<{
     totalFollowing: number
     totalFollowers: number
     oneWayOutCount: number
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
+
+  // Get cache functions
+  const cache = useCache()
 
   // Initialize user FID from Farcaster SDK
   useEffect(() => {
@@ -131,23 +134,49 @@ export default function OneWayOutPage() {
         const currentUserFid = context.user.fid
         if (currentUserFid) {
           console.log(`🔍 Using current user's FID: ${currentUserFid}`)
-          setUserFid(currentUserFid)
+          setUserFid(currentUserFid.toString())
         } else {
           console.log('⚠️ No user FID available from SDK context')
-          // Fallback to allow manual input
-          setUserFid(0)
+          setUserFid('')
         }
       } catch (err) {
         console.error('❌ Failed to get user FID from SDK:', err)
-        // Fallback to allow manual input
-        setUserFid(0)
+        setUserFid('')
       }
     }
 
     initializeFid()
   }, [])
 
-  const analyzeOneWayOut = React.useCallback(async (fid: number) => {
+  // Check cache and load cached data if available
+  const loadFromCacheIfValid = React.useCallback(() => {
+    if (cache.isCacheValid() && cache.userFid === userFid) {
+      console.log('🔄 Loading from cache - valid data found')
+      
+      // Use cached data
+      setOneWayOut(cache.oneWayOut)
+      setAnalysisStats({
+        totalFollowing: cache.analysisStats?.totalFollowing || 0,
+        totalFollowers: cache.analysisStats?.totalFollowers || 0,
+        oneWayOutCount: cache.oneWayOut.length
+      })
+      
+      return true // Cache was used
+    }
+    return false // No valid cache
+  }, [cache, userFid])
+
+  const analyzeOneWayOut = React.useCallback(async (fid: string) => {
+    if (!fid || fid.trim() === '') {
+      console.log('⚠️ No FID provided, skipping analysis')
+      return
+    }
+
+    // Check cache first
+    if (loadFromCacheIfValid()) {
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -186,13 +215,28 @@ export default function OneWayOutPage() {
       const sortedOneWayOut = oneWayOut.sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
 
       setOneWayOut(sortedOneWayOut)
-      setAnalysisStats({
+      const stats = {
         totalFollowers: followersData.followers.length,
         totalFollowing: followingData.following.length,
         oneWayOutCount: sortedOneWayOut.length
+      }
+      setAnalysisStats(stats)
+
+      // Store in cache
+      cache.setCache({
+        userFid: fid,
+        followers: followersData.followers,
+        following: followingData.following,
+        oneWayOut: sortedOneWayOut,
+        analysisStats: {
+          totalFollowing: followingData.following.length,
+          totalFollowers: followersData.followers.length,
+          oneWayOutCount: sortedOneWayOut.length
+        }
       })
       
       console.log(`✅ One-way OUT analysis complete: ${sortedOneWayOut.length} asymmetric follows found`)
+      console.log('💾 Data cached for future navigation')
       
     } catch (err) {
       console.error('❌ One-way OUT analysis failed:', err)
@@ -203,7 +247,7 @@ export default function OneWayOutPage() {
       setLoading(false)
       setLoadingStage('Initializing...')
     }
-  }, [])
+  }, [cache, loadFromCacheIfValid])
 
   // 🚀 HIGHEST PRIORITY: Notify Farcaster frame is ready IMMEDIATELY
   useEffect(() => {
@@ -220,12 +264,15 @@ export default function OneWayOutPage() {
     initializeFrame()
   }, []) // Run once on mount - HIGHEST PRIORITY
 
-  // 📊 LOWER PRIORITY: Load data only AFTER frame is ready
+  // Auto-load data on mount, checking cache first
   useEffect(() => {
-    if (userFid && userFid > 0) {
-      analyzeOneWayOut(userFid)
+    if (userFid && userFid.trim() !== '') {
+      // Try cache first, then analyze if needed
+      if (!loadFromCacheIfValid()) {
+        analyzeOneWayOut(userFid)
+      }
     }
-  }, [userFid, analyzeOneWayOut]) // Only run after userFid is set
+  }, [userFid, analyzeOneWayOut, loadFromCacheIfValid])
 
   // Handle unfollow action (placeholder)
   const handleUnfollowUser = async (fid: number) => {
@@ -233,14 +280,7 @@ export default function OneWayOutPage() {
     alert(`Unfollow functionality would be implemented here for FID: ${fid}`)
   }
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (userFid) {
-      analyzeOneWayOut(userFid)
-    }
-  }
-
+  // Handle retry
   const handleRetry = () => {
     if (userFid) {
       analyzeOneWayOut(userFid)
@@ -262,42 +302,10 @@ export default function OneWayOutPage() {
             But don&apos;t follow you back
           </p>
           <p className="text-green-600 text-xs sm:text-sm mt-2 italic px-2">
-            📊 Fetches ALL followers and following for complete analysis
+            📊 Automatically analyzing your complete network
           </p>
           <div className="border-t border-green-600 mt-4 w-24 sm:w-32 mx-auto crt-glow"></div>
         </div>
-
-        {/* Input Form - Mobile Optimized */}
-        <form onSubmit={handleSubmit} className="mb-6 w-full">
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 px-2 w-full">
-            <label htmlFor="fid" className="text-green-300 text-sm sm:text-base text-center sm:text-left shrink-0">
-              Enter Farcaster FID:
-            </label>
-            <div className="flex gap-2 w-full max-w-sm sm:max-w-none sm:w-auto">
-              <input
-                id="fid"
-                type="number"
-                value={userFid}
-                onChange={(e) => setUserFid(Number(e.target.value))}
-                placeholder="e.g. 3621"
-                className="bg-black border border-green-600 text-green-400 px-3 py-3 sm:py-2 rounded-md flex-1 sm:w-28 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 text-base sm:text-sm min-h-[44px] min-w-0 crt-border-glow"
-                disabled={loading}
-                min="1"
-                required
-                inputMode="numeric"
-                pattern="[0-9]*"
-              />
-              <LoadingButton 
-                type="submit" 
-                loading={loading}
-                disabled={loading || !userFid}
-                className="bg-green-900 hover:bg-green-800 disabled:bg-gray-800 text-green-400 px-3 sm:px-4 py-3 sm:py-2 rounded-md border border-green-600 transition-colors whitespace-nowrap min-h-[44px] text-xs sm:text-base shrink-0 crt-glow hover:crt-glow-strong"
-              >
-                Analyze
-              </LoadingButton>
-            </div>
-          </div>
-        </form>
 
         {/* Analysis Stats - Mobile Responsive */}
         {analysisStats && !loading && (

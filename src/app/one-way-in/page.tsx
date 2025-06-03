@@ -9,6 +9,7 @@ import {
   CRTCardSkeleton
 } from '../../../components/LoadingStates'
 import { sdk } from '@farcaster/frame-sdk'
+import { useCache } from '../../components/CacheProvider'
 
 interface FarcasterUser {
   fid: number
@@ -118,6 +119,9 @@ export default function OneWayInPage() {
   } | null>(null)
   const [loadingStage, setLoadingStage] = useState('Initializing...')
 
+  // Get cache functions
+  const cache = useCache()
+
   // Initialize user FID from Farcaster SDK
   useEffect(() => {
     const initializeFid = async () => {
@@ -155,10 +159,33 @@ export default function OneWayInPage() {
     return oneWayInUsers.sort((a, b) => b.followerCount - a.followerCount)
   }, [])
 
+  // Check cache and load cached data if available
+  const loadFromCacheIfValid = React.useCallback(() => {
+    if (cache.isCacheValid() && cache.userFid === userFid) {
+      console.log('🔄 Loading from cache - valid data found')
+      
+      // Use cached data
+      setOneWayIn(cache.oneWayIn)
+      setAnalysisStats({
+        totalFollowing: cache.analysisStats?.totalFollowing || 0,
+        totalFollowers: cache.analysisStats?.totalFollowers || 0,
+        oneWayInCount: cache.oneWayIn.length
+      })
+      
+      return true // Cache was used
+    }
+    return false // No valid cache
+  }, [cache, userFid])
+
   // Analyze one-way IN relationships
   const analyzeOneWayIn = React.useCallback(async (fid: string) => {
     if (!fid || fid.trim() === '') {
       console.log('⚠️ No FID provided, skipping analysis')
+      return
+    }
+
+    // Check cache first
+    if (loadFromCacheIfValid()) {
       return
     }
     
@@ -210,14 +237,30 @@ export default function OneWayInPage() {
 
       console.log(`🔄 One-way IN analysis results: ${oneWayInUsers.length} accounts`)
 
+      // Set local state
       setOneWayIn(oneWayInUsers)
-      setAnalysisStats({
+      const stats = {
         totalFollowing: followingData.following.length,
         totalFollowers: followersData.followers.length,
         oneWayInCount: oneWayInUsers.length
+      }
+      setAnalysisStats(stats)
+
+      // Store in cache
+      cache.setCache({
+        userFid: fid,
+        followers: followersData.followers,
+        following: followingData.following,
+        oneWayIn: oneWayInUsers,
+        analysisStats: {
+          totalFollowing: followingData.following.length,
+          totalFollowers: followersData.followers.length,
+          oneWayInCount: oneWayInUsers.length
+        }
       })
 
-      // Frame ready is now called immediately on mount, not here
+      console.log('💾 Data cached for future navigation')
+
     } catch (err) {
       console.error('❌ One-way IN analysis failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze one-way relationships')
@@ -225,7 +268,7 @@ export default function OneWayInPage() {
       setLoading(false)
       setLoadingStage('Initializing...')
     }
-  }, [calculateOneWayIn])
+  }, [calculateOneWayIn, cache, loadFromCacheIfValid])
 
   // Handle follow action (placeholder)
   const handleFollowUser = async (fid: number) => {
@@ -233,14 +276,16 @@ export default function OneWayInPage() {
     alert(`Follow functionality would be implemented here for FID: ${fid}`)
   }
 
-  // 🚀 Frame ready is now handled by home page - removed duplicate ready() call
-  // Auto-load data on mount since frame ready was called by home page
+  // Auto-load data on mount, checking cache first
   useEffect(() => {
     console.log('📊 Loading data (frame ready handled by home page)...')
     if (userFid && userFid.trim() !== '') {
-      analyzeOneWayIn(userFid)
+      // Try cache first, then analyze if needed
+      if (!loadFromCacheIfValid()) {
+        analyzeOneWayIn(userFid)
+      }
     }
-  }, [userFid, analyzeOneWayIn]) // Load data immediately
+  }, [userFid, analyzeOneWayIn, loadFromCacheIfValid])
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-3 sm:p-4 w-full overflow-x-hidden">
