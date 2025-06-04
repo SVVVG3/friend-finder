@@ -346,70 +346,74 @@ export function OnboardingAnalysisLoader({
   className?: string
 }) {
   return (
-    <div className={`text-center py-8 px-4 max-w-md mx-auto ${className}`}>
+    <div className={`text-center py-8 px-4 max-w-lg mx-auto ${className}`}>
       {/* Branding Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-green-400 mb-2 tracking-wider crt-text-glow">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-green-400 mb-3 tracking-wider crt-text-glow">
           🔍 FRIEND FINDER
         </h1>
-        <div className="border-t border-green-600 w-24 mx-auto crt-glow"></div>
+        <div className="border-t border-green-600 w-32 mx-auto crt-glow"></div>
       </div>
 
-      {/* Value Proposition */}
-      <div className="mb-8 text-left bg-gray-900/50 border border-green-600/50 rounded-lg p-4">
-        <h3 className="text-green-400 font-bold text-lg mb-3 text-center crt-text-glow">
-          🚀 What you&apos;ll discover:
+      {/* Value Proposition - More Compact */}
+      <div className="mb-8 text-left bg-gray-900/40 border border-green-600/40 rounded-xl p-5">
+        <h3 className="text-green-400 font-bold text-lg mb-4 text-center crt-text-glow">
+          🚀 Discover Hidden Opportunities
         </h3>
-        <div className="space-y-2 text-green-300 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-blue-400">📨</span>
+        <div className="space-y-3 text-green-300 text-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-blue-400 text-lg">📨</span>
             <span>People who follow you but you don&apos;t follow back</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-orange-400">📤</span>
+          <div className="flex items-center gap-3">
+            <span className="text-orange-400 text-lg">📤</span>
             <span>People you follow who don&apos;t follow you back</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-green-400">🌟</span>
-            <span>Warm connection recommendations (optional)</span>
+          <div className="flex items-center gap-3">
+            <span className="text-green-400 text-lg">🌟</span>
+            <span>Warm connection recommendations</span>
           </div>
         </div>
       </div>
       
-      {/* Loading Animation */}
-      <div className="crt-network-animation inline-block mb-4">
-        <div className="h-16 w-16 border-2 border-green-400/30 rounded-full relative crt-glow">
-          <div className="absolute inset-2 border border-green-400/60 rounded-full crt-pulse">
-            <div className="absolute inset-2 bg-green-400/20 rounded-full"></div>
+      {/* Loading Section - More Integrated */}
+      <div className="mb-6">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="crt-network-animation">
+            <div className="h-10 w-10 border-2 border-green-400/30 rounded-full relative crt-glow">
+              <div className="absolute inset-1 border border-green-400/60 rounded-full crt-pulse">
+                <div className="absolute inset-1 bg-green-400/20 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="text-green-400 text-lg font-bold font-mono crt-text-glow">
+              Analyzing Your Network
+            </div>
+            <div className="text-green-300 text-sm font-mono">
+              {stage}<span className="crt-typing-cursor">|</span>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="text-green-400 text-lg font-bold font-mono mb-2 crt-text-glow">
-        🌐 Analyzing Your Network
-      </div>
-      
-      <div className="text-green-300 text-sm mb-4 font-mono">
-        {stage}<span className="crt-typing-cursor">|</span>
-      </div>
-      
-      {progress > 0 && (
-        <div className="max-w-xs mx-auto mb-4">
-          <div className="crt-progress-bar h-2 mb-2">
-            <div 
-              className="crt-progress-fill h-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            ></div>
+        
+        {progress > 0 && (
+          <div className="max-w-sm mx-auto mb-4">
+            <div className="crt-progress-bar h-2 mb-2">
+              <div 
+                className="crt-progress-fill h-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <div className="text-green-600 text-xs font-mono">
+              {progress}% Complete • About 15-30 seconds
+            </div>
           </div>
-          <div className="text-green-600 text-xs font-mono">
-            {progress}% Complete • Just takes 15-30 seconds
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Expectation Setting */}
-      <div className="text-green-600 text-xs font-mono mt-4 bg-green-400/5 p-3 rounded border border-green-600/30">
-        💡 We&apos;re scanning your Farcaster network to find hidden connection opportunities and optimize your follow strategy
+      {/* Bottom Message - More Concise */}
+      <div className="text-green-600 text-xs font-mono bg-green-400/5 p-4 rounded-lg border border-green-600/20">
+        💡 Scanning your Farcaster network to optimize your connections
       </div>
     </div>
   )
