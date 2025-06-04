@@ -72,6 +72,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   })
 
   // Basic analysis for one-way follows (automatic on load)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const startAnalysis = useCallback(async (fid: string) => {
     // Prevent multiple concurrent analyses
     if (analysisState.isAnalyzing) {
