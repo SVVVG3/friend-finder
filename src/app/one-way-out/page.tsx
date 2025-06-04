@@ -97,8 +97,8 @@ function OneWayOutCard({
         <div className="flex-shrink-0">
           <button 
             className="bg-orange-400/10 border border-orange-400 text-orange-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-orange-400/20 hover:shadow-orange-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap crt-border-glow hover:crt-glow-strong"
-            onClick={() => onUnfollowUser?.(fid)}
-            aria-label={`Unfollow ${displayName}`}
+            onClick={handleProfileClick}
+            aria-label={`Visit ${displayName}'s profile to unfollow`}
           >
             <span className="hidden sm:inline">Unfollow</span>
             <span className="sm:hidden">Unfollow</span>

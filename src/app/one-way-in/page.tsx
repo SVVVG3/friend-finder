@@ -97,8 +97,8 @@ function OneWayInCard({
         <div className="flex-shrink-0">
           <button 
             className="bg-green-400/10 border border-green-400 text-green-400 px-2 sm:px-4 py-2 rounded text-xs sm:text-sm hover:bg-green-400/20 hover:shadow-green-400/30 transition-all duration-200 min-h-[44px] whitespace-nowrap crt-border-glow hover:crt-glow-strong"
-            onClick={() => onFollowUser?.(fid)}
-            aria-label={`Follow ${displayName}`}
+            onClick={handleProfileClick}
+            aria-label={`Visit ${displayName}'s profile to follow`}
           >
             <span className="hidden sm:inline">Follow Back</span>
             <span className="sm:hidden">Follow</span>
