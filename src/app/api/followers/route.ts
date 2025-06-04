@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     console.log(`📥 Fetching ALL followers for FID: ${fid}`)
 
     const maxPages = 300 // Increased from 200 to handle larger followings  
-    const batchSize = 150 // Increased from 100 to 150 (Neynar SDK examples use this)
+    const batchSize = 100 // Reverted back to 100 - 150 caused API failures
     let cursor: string | undefined
     let page = 1
     const allFollowers: Array<{
