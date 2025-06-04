@@ -395,7 +395,7 @@ export function OnboardingAnalysisLoader({
         <h3 className="text-green-400 font-bold text-lg mb-4 text-center crt-text-glow">
           🔍 What are we analyzing?
         </h3>
-        <div className="space-y-3 text-green-300 text-sm">
+        <div className="space-y-3 text-green-300 text-xs sm:text-sm">
           <div className="flex items-center gap-3">
             <span className="text-blue-400 text-lg">📨</span>
             <span>People who follow you but you don&apos;t follow back</span>
