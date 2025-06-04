@@ -248,7 +248,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         progress: null
       })
     }
-  }, [cache, analysisState.isAnalyzing])
+  }, [cache])
 
   // Separate warm recommendations analysis (manual trigger only)
   const startWarmRecsAnalysis = useCallback(async (fid: string) => {
