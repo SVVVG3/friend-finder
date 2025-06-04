@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
+import { sdk } from '@farcaster/frame-sdk'
 import { UserWithMutuals } from '../utils/sort'
 
 // Props interface for the component
@@ -36,15 +37,24 @@ function RecommendationCard({
   // Farcaster profile URL
   const profileUrl = `https://farcaster.xyz/${username}`
 
+  // Handle profile navigation using Farcaster SDK
+  const handleProfileClick = async () => {
+    try {
+      await sdk.actions.openUrl(profileUrl)
+    } catch (error) {
+      console.error('Failed to open profile:', error)
+      // Fallback to regular link
+      window.open(profileUrl, '_blank')
+    }
+  }
+
   return (
     <div className="bg-black border border-green-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden">
       <div className="flex items-start gap-2 sm:gap-3 mb-3 w-full">
         <div className="flex-shrink-0">
-          <a 
-            href={profileUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="block hover:opacity-80 transition-opacity duration-200"
+          <button 
+            onClick={handleProfileClick}
+            className="block hover:opacity-80 transition-opacity duration-200 cursor-pointer"
           >
             {pfpUrl && !imageError ? (
               <Image 
@@ -62,15 +72,13 @@ function RecommendationCard({
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}
-          </a>
+          </button>
         </div>
         
         <div className="flex-1 min-w-0">
-          <a 
-            href={profileUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="block hover:opacity-80 transition-opacity duration-200"
+          <button 
+            onClick={handleProfileClick}
+            className="block hover:opacity-80 transition-opacity duration-200 cursor-pointer text-left w-full"
           >
             <h3 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate">
               {displayName}
@@ -78,7 +86,7 @@ function RecommendationCard({
             <p className="text-green-300 text-xs sm:text-sm mb-1 truncate">
               @{username}
             </p>
-          </a>
+          </button>
           {score && (
             <div className="text-green-600 text-xs">
               Score: {Math.round(score * 10) / 10}
