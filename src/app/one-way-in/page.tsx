@@ -139,12 +139,16 @@ export default function OneWayInPage() {
   const oneWayIn = data.oneWayIn
   const analysisStats = data.analysisStats
 
-  // Show loading state while frame is initializing or during basic analysis (not warm recs)
-  if (!isFrameReady || (isAnalyzing && oneWayIn.length === 0 && analysisStats === null)) {
+  // Show loading state while frame is initializing, during analysis, OR when we have no data yet
+  if (!isFrameReady || isAnalyzing || (!isComplete && oneWayIn.length === 0 && analysisStats === null && !analysisError)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <OnboardingAnalysisLoader 
-          stage={isAnalyzing ? "Running background analysis..." : "Initializing..."} 
+          stage={
+            !isFrameReady ? "Initializing..." : 
+            isAnalyzing ? "Running background analysis..." : 
+            "Starting analysis..."
+          } 
         />
       </div>
     )
