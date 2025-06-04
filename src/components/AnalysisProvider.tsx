@@ -107,101 +107,137 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     })
 
     try {
-      // Step 1: Fetch followers using API route
+      // Step 1: Fetch followers using API route with timeout
       setAnalysisState(prev => ({
         ...prev,
         progress: { step: 'Fetching followers...', current: 1, total: 3 }
       }))
       
-      const followersResponse = await fetch(`/api/followers?fid=${fid}`)
-      if (!followersResponse.ok) {
-        throw new Error('Failed to fetch followers data')
-      }
-      const followersData = await followersResponse.json()
+      const followersController = new AbortController()
+      const followersTimeout = setTimeout(() => followersController.abort(), 60000) // 60 second timeout
       
-      if (!followersData.success) {
-        throw new Error('Invalid followers response from API')
+      try {
+        const followersResponse = await fetch(`/api/followers?fid=${fid}`, {
+          signal: followersController.signal
+        })
+        clearTimeout(followersTimeout)
+        
+        if (!followersResponse.ok) {
+          throw new Error(`Failed to fetch followers data: ${followersResponse.status} ${followersResponse.statusText}`)
+        }
+        const followersData = await followersResponse.json()
+        
+        if (!followersData.success) {
+          throw new Error(`Invalid followers response: ${followersData.error || 'Unknown error'}`)
+        }
+        
+        console.log(`✅ Followers fetched: ${followersData.followers?.length || 0} users`)
+
+        // Step 2: Fetch following using API route with timeout
+        setAnalysisState(prev => ({
+          ...prev,
+          progress: { step: 'Fetching following...', current: 2, total: 3 }
+        }))
+        
+        const followingController = new AbortController()
+        const followingTimeout = setTimeout(() => followingController.abort(), 60000) // 60 second timeout
+        
+        try {
+          const followingResponse = await fetch(`/api/following?fid=${fid}`, {
+            signal: followingController.signal
+          })
+          clearTimeout(followingTimeout)
+          
+          if (!followingResponse.ok) {
+            throw new Error(`Failed to fetch following data: ${followingResponse.status} ${followingResponse.statusText}`)
+          }
+          const followingData = await followingResponse.json()
+          
+          if (!followingData.success) {
+            throw new Error(`Invalid following response: ${followingData.error || 'Unknown error'}`)
+          }
+          
+          console.log(`✅ Following fetched: ${followingData.following?.length || 0} users`)
+
+          // Step 3: Calculate basic relationships (one-way follows only)
+          setAnalysisState(prev => ({
+            ...prev,
+            progress: { step: 'Analyzing relationships...', current: 3, total: 3 }
+          }))
+
+          const followers: FarcasterUser[] = followersData.followers || []
+          const following: FarcasterUser[] = followingData.following || []
+
+          // Create FID sets for efficient lookups
+          const followerFids = new Set(followers.map((user: FarcasterUser) => user.fid))
+          const followingFids = new Set(following.map((user: FarcasterUser) => user.fid))
+
+          // Calculate one-way relationships
+          const oneWayIn = followers
+            .filter((user: FarcasterUser) => !followingFids.has(user.fid))
+            .sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
+
+          const oneWayOut = following
+            .filter((user: FarcasterUser) => !followerFids.has(user.fid))
+            .sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
+
+          const analysisStats: AnalysisStats = {
+            totalFollowing: following.length,
+            totalFollowers: followers.length,
+            oneWayInCount: oneWayIn.length,
+            oneWayOutCount: oneWayOut.length,
+            warmRecsCount: 0 // Not calculated in basic analysis
+          }
+
+          const completedData = {
+            oneWayIn,
+            oneWayOut,
+            warmRecs: [], // Empty - not calculated in basic analysis
+            analysisStats
+          }
+
+          // Save basic analysis to cache (warmRecs still empty)
+          cache.setCache({
+            userFid: fid,
+            followers,
+            following,
+            oneWayIn,
+            oneWayOut,
+            warmRecs: [], // Empty for basic analysis
+            analysisStats
+          })
+
+          // Update local state
+          setAnalysisData(completedData)
+          
+          setAnalysisState({
+            isAnalyzing: false,
+            isComplete: true,
+            error: null,
+            progress: null
+          })
+
+          console.log('✅ Basic analysis complete:', {
+            oneWayIn: oneWayIn.length,
+            oneWayOut: oneWayOut.length,
+            warmRecs: 0
+          })
+
+        } catch (followingError: unknown) {
+          clearTimeout(followingTimeout)
+          if (followingError instanceof Error && followingError.name === 'AbortError') {
+            throw new Error('Following data request timed out after 60 seconds. Please try again.')
+          }
+          throw followingError
+        }
+
+      } catch (followersError: unknown) {
+        clearTimeout(followersTimeout)
+        if (followersError instanceof Error && followersError.name === 'AbortError') {
+          throw new Error('Followers data request timed out after 60 seconds. Please try again.')
+        }
+        throw followersError
       }
-
-      // Step 2: Fetch following using API route
-      setAnalysisState(prev => ({
-        ...prev,
-        progress: { step: 'Fetching following...', current: 2, total: 3 }
-      }))
-      
-      const followingResponse = await fetch(`/api/following?fid=${fid}`)
-      if (!followingResponse.ok) {
-        throw new Error('Failed to fetch following data')
-      }
-      const followingData = await followingResponse.json()
-      
-      if (!followingData.success) {
-        throw new Error('Invalid following response from API')
-      }
-
-      // Step 3: Calculate basic relationships (one-way follows only)
-      setAnalysisState(prev => ({
-        ...prev,
-        progress: { step: 'Analyzing relationships...', current: 3, total: 3 }
-      }))
-
-      const followers: FarcasterUser[] = followersData.followers || []
-      const following: FarcasterUser[] = followingData.following || []
-
-      // Create FID sets for efficient lookups
-      const followerFids = new Set(followers.map((user: FarcasterUser) => user.fid))
-      const followingFids = new Set(following.map((user: FarcasterUser) => user.fid))
-
-      // Calculate one-way relationships
-      const oneWayIn = followers
-        .filter((user: FarcasterUser) => !followingFids.has(user.fid))
-        .sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
-
-      const oneWayOut = following
-        .filter((user: FarcasterUser) => !followerFids.has(user.fid))
-        .sort((a: FarcasterUser, b: FarcasterUser) => b.followerCount - a.followerCount)
-
-      const analysisStats: AnalysisStats = {
-        totalFollowing: following.length,
-        totalFollowers: followers.length,
-        oneWayInCount: oneWayIn.length,
-        oneWayOutCount: oneWayOut.length,
-        warmRecsCount: 0 // Not calculated in basic analysis
-      }
-
-      const completedData = {
-        oneWayIn,
-        oneWayOut,
-        warmRecs: [], // Empty - not calculated in basic analysis
-        analysisStats
-      }
-
-      // Save basic analysis to cache (warmRecs still empty)
-      cache.setCache({
-        userFid: fid,
-        followers,
-        following,
-        oneWayIn,
-        oneWayOut,
-        warmRecs: [], // Empty for basic analysis
-        analysisStats
-      })
-
-      // Update local state
-      setAnalysisData(completedData)
-      
-      setAnalysisState({
-        isAnalyzing: false,
-        isComplete: true,
-        error: null,
-        progress: null
-      })
-
-      console.log('✅ Basic analysis complete:', {
-        oneWayIn: oneWayIn.length,
-        oneWayOut: oneWayOut.length,
-        warmRecs: 0
-      })
 
     } catch (error) {
       console.error('❌ Basic analysis failed:', error)
