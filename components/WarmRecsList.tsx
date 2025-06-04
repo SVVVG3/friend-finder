@@ -8,7 +8,6 @@ interface WarmRecsListProps {
   recommendations: UserWithMutuals[]
   loading?: boolean
   error?: string
-  onFollowUser?: (fid: number) => void
   className?: string
 }
 
@@ -169,7 +168,6 @@ export default function WarmRecsList({
   recommendations, 
   loading = false, 
   error, 
-  onFollowUser,
   className = '' 
 }: WarmRecsListProps) {
   
