@@ -63,10 +63,6 @@ export default function TestComponentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [showEmpty, setShowEmpty] = useState(false)
 
-  const handleFollowUser = (fid: number) => {
-    alert(`Following user with FID: ${fid}`)
-  }
-
   const toggleLoading = () => {
     setLoading(!loading)
     setError(null)
@@ -162,7 +158,6 @@ export default function TestComponentsPage() {
           recommendations={showEmpty ? [] : sampleRecommendations}
           loading={loading}
           error={error || undefined}
-          onFollowUser={handleFollowUser}
         />
 
         <div style={{ 
@@ -179,7 +174,7 @@ export default function TestComponentsPage() {
             <li>✅ Displays mutual connections, followers, and following counts</li>
             <li>✅ Shows recommendation scores</li>
             <li>✅ Includes bio text with truncation</li>
-            <li>✅ Follow button with click handler</li>
+            <li>✅ Follow button navigates to user profiles</li>
             <li>✅ Loading state with skeleton animations</li>
             <li>✅ Error state with styled message</li>
             <li>✅ Empty state with helpful message</li>
