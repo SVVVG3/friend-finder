@@ -40,31 +40,50 @@ function OneWayOutCard({
     bio 
   } = user
 
+  // Farcaster profile URL
+  const profileUrl = `https://farcaster.xyz/${username}`
+
   return (
     <div className="bg-black border border-green-400 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 font-mono shadow-lg hover:shadow-green-400/20 hover:bg-green-400/5 transition-all duration-200 transform hover:-translate-y-0.5 mx-2 sm:mx-0 w-full max-w-full overflow-x-hidden crt-glow hover:crt-glow-strong">
       <div className="flex items-start gap-2 sm:gap-3 mb-3 w-full">
+        {/* Clickable Avatar */}
         <div className="flex-shrink-0">
-          {pfpUrl && !imageError ? (
-            <Image 
-              src={pfpUrl} 
-              alt={`${displayName} avatar`}
-              width={48}
-              height={48}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 crt-glow"
-              onError={() => setImageError(true)}
-              unoptimized={true}
-              priority={false}
-            />
-          ) : (
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-sm sm:text-lg crt-glow">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <a 
+            href={profileUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block hover:opacity-80 transition-opacity duration-200"
+          >
+            {pfpUrl && !imageError ? (
+              <Image 
+                src={pfpUrl} 
+                alt={`${displayName} avatar`}
+                width={48}
+                height={48}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 crt-glow"
+                onError={() => setImageError(true)}
+                unoptimized={true}
+                priority={false}
+              />
+            ) : (
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-green-400 bg-green-400/10 flex items-center justify-center text-green-400 font-bold text-sm sm:text-lg crt-glow">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </a>
         </div>
         
+        {/* Clickable User Info */}
         <div className="flex-1 min-w-0 overflow-hidden">
-          <h4 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate crt-text-glow">{displayName}</h4>
-          <p className="text-green-300 text-xs sm:text-sm mb-1 truncate">@{username}</p>
+          <a 
+            href={profileUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block hover:opacity-80 transition-opacity duration-200"
+          >
+            <h4 className="text-green-400 font-bold text-sm sm:text-base mb-1 truncate crt-text-glow">{displayName}</h4>
+            <p className="text-green-300 text-xs sm:text-sm mb-1 truncate">@{username}</p>
+          </a>
         </div>
 
         <div className="flex-shrink-0">
