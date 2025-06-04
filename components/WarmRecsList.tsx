@@ -14,16 +14,13 @@ interface WarmRecsListProps {
 
 // Individual recommendation card component - now with modern Tailwind styling
 function RecommendationCard({ 
-  recommendation, 
-  onFollowUser 
+  recommendation
 }: { 
   recommendation: UserWithMutuals
-  onFollowUser?: (fid: number) => void
 }) {
   const [imageError, setImageError] = useState(false)
   
   const { 
-    fid, 
     username, 
     displayName, 
     followerCount, 
@@ -246,8 +243,7 @@ export default function WarmRecsList({
         {recommendations.map((rec) => (
           <RecommendationCard 
             key={rec.fid} 
-            recommendation={rec} 
-            onFollowUser={onFollowUser}
+            recommendation={rec}
           />
         ))}
       </div>

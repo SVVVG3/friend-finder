@@ -23,16 +23,13 @@ interface FarcasterUser {
 
 // Individual user card component for one-way out
 function OneWayOutCard({ 
-  user, 
-  onUnfollowUser
+  user
 }: { 
   user: FarcasterUser
-  onUnfollowUser?: (fid: number) => void
 }) {
   const [imageError, setImageError] = useState(false)
   
   const { 
-    fid, 
     username, 
     displayName, 
     followerCount, 
@@ -142,11 +139,6 @@ export default function OneWayOutPage() {
   const oneWayOut = data.oneWayOut
   const analysisStats = data.analysisStats
 
-  // Unfollow user handler (placeholder)
-  const handleUnfollowUser = async (fid: number) => {
-    alert(`Unfollow user with FID: ${fid}`)
-  }
-
   // Show loading state while frame is initializing or during basic analysis (not warm recs)
   if (!isFrameReady || (isAnalyzing && oneWayOut.length === 0 && analysisStats === null)) {
     return (
@@ -253,7 +245,6 @@ export default function OneWayOutPage() {
             <OneWayOutCard 
               key={user.fid} 
               user={user} 
-              onUnfollowUser={handleUnfollowUser}
             />
           ))}
         </div>

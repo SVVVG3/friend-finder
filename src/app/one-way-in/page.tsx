@@ -23,16 +23,13 @@ interface FarcasterUser {
 
 // Individual user card component for one-way in
 function OneWayInCard({ 
-  user, 
-  onFollowUser
+  user
 }: { 
   user: FarcasterUser
-  onFollowUser?: (fid: number) => void
 }) {
   const [imageError, setImageError] = useState(false)
   
   const { 
-    fid, 
     username, 
     displayName, 
     followerCount, 
@@ -142,11 +139,6 @@ export default function OneWayInPage() {
   const oneWayIn = data.oneWayIn
   const analysisStats = data.analysisStats
 
-  // Follow user handler (placeholder)
-  const handleFollowUser = async (fid: number) => {
-    alert(`Follow user with FID: ${fid}`)
-  }
-
   // Show loading state while frame is initializing or during basic analysis (not warm recs)
   if (!isFrameReady || (isAnalyzing && oneWayIn.length === 0 && analysisStats === null)) {
     return (
@@ -252,8 +244,7 @@ export default function OneWayInPage() {
           {oneWayIn.map((user) => (
             <OneWayInCard 
               key={user.fid} 
-              user={user} 
-              onFollowUser={handleFollowUser}
+              user={user}
             />
           ))}
         </div>
