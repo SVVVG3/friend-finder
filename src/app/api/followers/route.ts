@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
 
     console.log(`📥 Fetching ALL followers for FID: ${fid}`)
 
-    const maxPages = 200 // Much higher limit (200 * 100 = 20000 max, but will stop when no more data)
-    const batchSize = 100 // Reverting to 100 - 150 caused 400 errors
+    const maxPages = 300 // Increased from 200 to handle larger followings  
+    const batchSize = 150 // Increased from 100 to 150 (Neynar SDK examples use this)
     let cursor: string | undefined
     let page = 1
     const allFollowers: Array<{
@@ -51,9 +51,12 @@ export async function GET(request: NextRequest) {
         
         console.log(`📄 Page ${page}: +${pageFollowers.length} followers (total: ${allFollowers.length})`)
         
-        // Small delay between requests to be respectful
+        // Optimized delay strategy based on Neynar rate limits
         if (cursor && page < maxPages) {
-          await new Promise(resolve => setTimeout(resolve, 100))
+          // Growth plan: 600 RPM = 10 RPS, so 100ms minimum between requests
+          // Scale plan: 1200 RPM = 20 RPS, so 50ms minimum between requests
+          // Using 120ms for safety margin on Growth plan
+          await new Promise(resolve => setTimeout(resolve, 120)) 
         }
         
       } catch (pageError) {
