@@ -26,8 +26,6 @@ export default function Nav() {
           return 'bg-blue-400/20 text-blue-400 border border-blue-400/50 shadow-lg shadow-blue-400/10'
         case '/one-way-out':
           return 'bg-orange-400/20 text-orange-400 border border-orange-400/50 shadow-lg shadow-orange-400/10'
-        case '/warm-recs':
-          return 'bg-green-400/20 text-green-400 border border-green-400/50 shadow-lg shadow-green-400/10'
         default:
           return defaultClasses
       }
@@ -39,8 +37,6 @@ export default function Nav() {
         return 'text-green-600/70 hover:text-blue-400 hover:bg-blue-400/10 border border-transparent hover:border-blue-600/30'
       case '/one-way-out':
         return 'text-green-600/70 hover:text-orange-400 hover:bg-orange-400/10 border border-transparent hover:border-orange-600/30'
-      case '/warm-recs':
-        return 'text-green-600/70 hover:text-green-400 hover:bg-green-400/10 border border-transparent hover:border-green-600/30'
       default:
         return defaultClasses
     }
@@ -70,17 +66,6 @@ export default function Nav() {
             <span className="text-xs sm:text-sm font-bold">Following</span>
             {isClient && pathname === '/one-way-out' && (
               <div className="w-1 h-1 bg-orange-400 rounded-full mt-1"></div>
-            )}
-          </Link>
-
-          {/* Recommendations - Warm Recs */}
-          <Link 
-            href="/warm-recs"
-            className={`${baseNavClasses} ${getActiveClasses('/warm-recs')}`}
-          >
-            <span className="text-xs sm:text-sm font-bold">Recommendations</span>
-            {isClient && pathname === '/warm-recs' && (
-              <div className="w-1 h-1 bg-green-400 rounded-full mt-1"></div>
             )}
           </Link>
         </div>
